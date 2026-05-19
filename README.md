@@ -1,127 +1,151 @@
 # Refa — Control vehicular (taller + refaccionaria)
 
-Scaffold funcional para gestionar clientes, vehículos, órdenes de trabajo, presupuestos, refacciones e inventario.
+Sistema para gestionar clientes, vehículos, órdenes de trabajo, presupuestos, refacciones e inventario.
 
-## Arquitectura
+## Arquitectura (stack premium)
 
 ```
-┌─────────────┐     REST /api      ┌──────────────────┐
-│  React SPA  │ ◄────────────────► │  Django + DRF    │
-│  (Vite)     │                    │  (backend/)      │
-└─────────────┘                    └────────┬─────────┘
-                                            │
-                    ┌───────────────────────┼───────────────────────┐
-                    ▼                       ▼                       ▼
-              PostgreSQL                 Redis                  Celery Worker
+┌──────────────────┐     REST /api      ┌─────────────────────────┐
+│  Next.js (App)   │ ◄────────────────► │  NestJS + Prisma        │
+│  frontend-next/  │     JWT Bearer     │  backend-nest/          │
+└──────────────────┘                    └───────────┬─────────────┘
+                                                    │
+                         ┌──────────────────────────┼──────────────────┐
+                         ▼                          ▼                  ▼
+                   PostgreSQL                    Redis            BullMQ (stubs)
 ```
 
-### Módulos backend (`backend/apps/`)
+| Capa | Tecnología |
+|------|------------|
+| Frontend | React + **Next.js 14** (App Router), TypeScript |
+| Backend | **NestJS** + TypeScript, módulos por dominio |
+| DB | **PostgreSQL** + **Prisma** ORM |
+| Auth | **JWT** + Passport (roles: admin, mecanico, recepcion, almacen, cliente) |
+| Cola | **BullMQ** + Redis (recordatorios, alertas stock — processors stub) |
+| Reportes | **PDFKit** + **ExcelJS** (PDF presupuesto, Excel refacciones) |
+| Notificaciones | Stubs Twilio / SendGrid / WhatsApp (solo env) |
+| Infra | **Docker Compose**: postgres, redis, api, frontend, nginx opcional |
 
-| App | Responsabilidad |
-|-----|-----------------|
-| `accounts` | Permisos por rol (grupos Django) |
-| `customers` | Clientes |
-| `vehicles` | Vehículos + historial de OTs |
-| `workorders` | Órdenes de trabajo (folio autogenerado) |
-| `quotes` | Presupuestos, líneas, aprobación con descuento de stock |
-| `parts` | Refacciones y movimientos de inventario |
-| `notifications` | Modelo de notificaciones + tarea Celery ejemplo |
-| `reports` | Resumen para dashboard |
+### Legacy (deprecado)
+
+- `backend/` — Django + DRF (ver [backend/DEPRECATED.md](backend/DEPRECATED.md))
+- `frontend/` — Vite + React
 
 ## Requisitos
 
-- Docker y Docker Compose
-- Node.js 18+ (solo para desarrollo del frontend en local)
+- Node.js 20+
+- Docker Desktop (recomendado para PostgreSQL y Redis)
+- PowerShell o bash
 
-## Levantar con Docker
+## Inicio rápido con Docker
 
-```bash
+```powershell
 # 1. Variables de entorno
-cp .env.example .env
+Copy-Item .env.example .env
 
-# 2. Servicios (postgres, redis, backend, celery)
+# 2. Levantar postgres, redis, API y frontend
 docker compose up --build -d
 
-# 3. Crear superusuario y grupos de roles
-docker compose exec backend python manage.py createsuperuser
-docker compose exec backend python manage.py crear_grupos
+# 3. (Opcional) Proxy nginx en puerto 80
+docker compose --profile with-nginx up -d nginx
 ```
 
-API disponible en: http://localhost:8000/api/  
-Admin Django: http://localhost:8000/admin/
+- Frontend: http://localhost:3000  
+- API: http://localhost:3001/api  
+- Login por defecto (seed): **admin** / **admin**
 
-### Token de API
+## Desarrollo local (sin Docker para Node)
 
-```bash
-curl -X POST http://localhost:8000/api/auth/token/ \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"tu_password"}'
-```
+```powershell
+# 1. Solo infraestructura
+docker compose up -d postgres redis
 
-Usa el token en el frontend (pantalla de login) o en cabecera `Authorization: Token <token>`.
+# 2. Copiar env y ajustar DATABASE_URL / REDIS_URL
+Copy-Item .env.example .env
 
-## Frontend (desarrollo local)
+# 3. Instalar dependencias
+npm run install:all
 
-```bash
-cd frontend
-npm install
-cp .env.example .env   # opcional: VITE_API_URL=http://localhost:8000/api
+# 4. Base de datos
+cd backend-nest
+npx prisma db push
+npx prisma db seed
+cd ..
+
+# 5. API + frontend en paralelo
 npm run dev
 ```
 
-Abre http://localhost:5173 — el proxy de Vite reenvía `/api` al backend.
+## Scripts raíz
 
-### Frontend desde la raíz
+| Script | Descripción |
+|--------|-------------|
+| `npm run install:all` | Instala backend-nest y frontend-next |
+| `npm run dev` | Nest watch + Next dev (concurrently) |
+| `npm run build` | Build producción de ambos |
+| `npm run docker:up` | `docker compose up --build -d` |
+| `npm run prisma:push` | Sincroniza schema Prisma |
+| `npm run prisma:seed` | Usuario admin/admin |
 
-También puedes correr los comandos del frontend sin entrar a la carpeta:
-
-```bash
-npm run install:frontend
-npm run dev
-```
-
-Scripts disponibles en raíz:
-
-- `npm run dev` -> `frontend` dev server
-- `npm run build` -> build del frontend
-- `npm run preview` -> vista previa del build
-
-## Endpoints principales
+## Endpoints principales (`/api`)
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| GET/POST | `/api/clientes/` | CRUD clientes |
-| GET/POST | `/api/vehiculos/` | CRUD vehículos |
-| GET | `/api/vehiculos/{id}/historial/` | Historial de OTs del vehículo |
-| GET/POST | `/api/ordenes/` | CRUD órdenes de trabajo |
-| GET/POST | `/api/presupuestos/` | CRUD presupuestos |
-| POST | `/api/presupuestos/{id}/aprobar/` | Aprueba y descuenta stock (transaccional) |
-| GET/POST | `/api/lineas-presupuesto/` | Líneas de presupuesto |
-| GET/POST | `/api/refacciones/` | CRUD refacciones |
-| GET/POST | `/api/movimientos-inventario/` | Movimientos (solo lectura/creación) |
-| GET | `/api/reportes/resumen/` | Métricas del dashboard |
-| POST | `/api/auth/token/` | Obtener token DRF |
+| POST | `/auth/login` o `/auth/token` | JWT (compat. nombre legacy) |
+| GET/POST | `/clientes` | CRUD clientes |
+| GET/POST/PATCH | `/vehiculos` | CRUD vehículos |
+| GET | `/vehiculos/:id/historial` | Historial OT del vehículo |
+| GET/POST/PATCH | `/ordenes` | Órdenes (folio `OT-YYYYMMDD-NNNN`) |
+| GET/POST | `/presupuestos` | Presupuestos |
+| POST | `/presupuestos/:id/aprobar` | Aprueba y descuenta stock (transacción) |
+| POST | `/lineas-presupuesto` | Líneas de presupuesto |
+| GET/POST | `/refacciones` | Refacciones |
+| GET/POST | `/movimientos-inventario` | Movimientos |
+| GET | `/reportes/resumen` | Dashboard |
+| GET | `/reportes/presupuestos/:id/pdf` | PDF presupuesto |
+| GET | `/reportes/refacciones/excel` | Export Excel |
+| GET | `/notificaciones/health` | Estado stubs notificaciones |
+| POST | `/cola/recordatorio` | Encolar recordatorio (stub) |
+| POST | `/cola/stock-alert` | Encolar alerta stock (stub) |
 
-## Roles (grupos Django)
+Autenticación: cabecera `Authorization: Bearer <token>`.
 
-- `administrador` — acceso completo
-- `recepcion` — alta de clientes, vehículos, órdenes
-- `mecanico` — actualización de estados de OT
-- `almacen` — refacciones e inventario
+## Seguridad
 
-Ejecutar `python manage.py crear_grupos` y asignar usuarios desde el admin.
+- **helmet** en NestJS
+- **@nestjs/throttler** (120 req/min por IP)
+- **CORS** configurable (`CORS_ORIGIN`)
+- En producción: terminar TLS en nginx/ingress, rotar `JWT_SECRET`, no commitear `.env`
 
-## Celery
+## Dashboard analítico (futuro)
 
-El worker procesa tareas en `apps.notifications.tasks` (ej. `verificar_stock_bajo`). Configuración en `config/celery.py` y variables `CELERY_*` en `.env`.
+Documentado para despliegue opcional:
+
+- **Grafana** — métricas de API/Redis/Postgres vía Prometheus
+- **Metabase** — BI sobre PostgreSQL (conexión read-only)
+
+No se incluye manifiesto K8s completo; path sugerido: Helm chart con postgres/redis externos y secrets en vault.
 
 ## Estructura del repositorio
 
 ```
 Refa/
+├── backend-nest/      # API NestJS + Prisma
+├── frontend-next/     # UI Next.js
+├── nginx/             # Proxy opcional
+├── backend/           # LEGACY Django
+├── frontend/          # LEGACY Vite
 ├── docker-compose.yml
 ├── .env.example
-├── backend/          # Django 5 + DRF
-├── frontend/         # React 18 + TypeScript + Vite
-└── README.md
+└── package.json
 ```
+
+## Roles
+
+| Rol Prisma | Uso |
+|------------|-----|
+| ADMIN | Acceso completo |
+| RECEPCION | Alta clientes, vehículos, órdenes |
+| MECANICO | Actualización OT |
+| ALMACEN | Inventario y cola stock |
+| CLIENTE | Reservado (portal futuro) |

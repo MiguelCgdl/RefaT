@@ -1,0 +1,221 @@
+// Schema Refa — migrado desde modelos Django
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RolUsuario {
+  ADMIN
+  MECANICO
+  RECEPCION
+  ALMACEN
+  CLIENTE
+}
+
+enum EstadoOrden {
+  RECIBIDO
+  DIAGNOSTICO
+  ESPERA_APROBACION
+  EN_PROCESO
+  LISTO
+  ENTREGADO
+  CANCELADO
+}
+
+enum PrioridadOrden {
+  BAJA
+  NORMAL
+  ALTA
+  URGENTE
+}
+
+enum EstadoPresupuesto {
+  BORRADOR
+  ENVIADO
+  APROBADO
+  RECHAZADO
+  VENCIDO
+}
+
+enum TipoLineaPresupuesto {
+  SERVICIO
+  REFACCION
+}
+
+enum TipoMovimientoInventario {
+  ENTRADA
+  SALIDA
+  AJUSTE
+}
+
+enum TipoNotificacion {
+  STOCK_BAJO
+  OT_LISTA
+  PRESUPUESTO
+  GENERAL
+}
+
+model Usuario {
+  id            Int      @id @default(autoincrement())
+  username      String   @unique
+  email         String?  @unique
+  passwordHash  String   @map("password_hash")
+  rol           RolUsuario @default(RECEPCION)
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en")
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+
+  ordenesAsignadas OrdenTrabajo[] @relation("MecanicoOrden")
+  notificaciones   Notificacion[]
+
+  @@map("usuarios")
+}
+
+model Cliente {
+  id            Int      @id @default(autoincrement())
+  nombre        String
+  email         String   @default("")
+  telefono      String   @default("")
+  rfc           String   @default("")
+  direccion     String   @default("")
+  notas         String   @default("")
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en")
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+
+  vehiculos Vehiculo[]
+
+  @@map("clientes")
+}
+
+model Vehiculo {
+  id                Int      @id @default(autoincrement())
+  clienteId         Int      @map("cliente_id")
+  marca             String
+  modelo            String
+  serieVin          String   @default("") @map("serie_vin")
+  anio              Int
+  placas            String   @unique
+  color             String   @default("")
+  kilometrajeActual Int      @default(0) @map("kilometraje_actual")
+  notas             String   @default("")
+  activo            Boolean  @default(true)
+  creadoEn          DateTime @default(now()) @map("creado_en")
+  actualizadoEn     DateTime @updatedAt @map("actualizado_en")
+
+  cliente Cliente        @relation(fields: [clienteId], references: [id])
+  ordenes OrdenTrabajo[]
+
+  @@map("vehiculos")
+}
+
+model OrdenTrabajo {
+  id             Int            @id @default(autoincrement())
+  folio          String         @unique
+  vehiculoId     Int            @map("vehiculo_id")
+  fechaIngreso   DateTime       @default(now()) @map("fecha_ingreso")
+  fechaEstimada  DateTime?      @map("fecha_estimada")
+  fechaCierre    DateTime?      @map("fecha_cierre")
+  estado         EstadoOrden    @default(RECIBIDO)
+  quejaCliente   String         @map("queja_cliente")
+  diagnostico    String         @default("")
+  mecanicoId     Int?           @map("mecanico_id")
+  prioridad      PrioridadOrden @default(NORMAL)
+  creadoEn       DateTime       @default(now()) @map("creado_en")
+  actualizadoEn  DateTime       @updatedAt @map("actualizado_en")
+
+  vehiculo              Vehiculo               @relation(fields: [vehiculoId], references: [id])
+  mecanico              Usuario?               @relation("MecanicoOrden", fields: [mecanicoId], references: [id])
+  presupuestos          Presupuesto[]
+  movimientosInventario MovimientoInventario[]
+
+  @@map("ordenes_trabajo")
+}
+
+model Presupuesto {
+  id            Int               @id @default(autoincrement())
+  ordenId       Int               @map("orden_id")
+  version       Int               @default(1)
+  estado        EstadoPresupuesto @default(BORRADOR)
+  subtotal      Decimal           @default(0) @db.Decimal(12, 2)
+  iva           Decimal           @default(0) @db.Decimal(12, 2)
+  total         Decimal           @default(0) @db.Decimal(12, 2)
+  aprobadoEn    DateTime?         @map("aprobado_en")
+  creadoEn      DateTime          @default(now()) @map("creado_en")
+  actualizadoEn DateTime          @updatedAt @map("actualizado_en")
+
+  orden  OrdenTrabajo       @relation(fields: [ordenId], references: [id], onDelete: Cascade)
+  lineas LineaPresupuesto[]
+
+  @@unique([ordenId, version])
+  @@map("presupuestos")
+}
+
+model LineaPresupuesto {
+  id              Int                  @id @default(autoincrement())
+  presupuestoId   Int                  @map("presupuesto_id")
+  tipo            TipoLineaPresupuesto
+  descripcion     String
+  refaccionId     Int?                 @map("refaccion_id")
+  cantidad        Decimal              @default(1) @db.Decimal(10, 2)
+  precioUnitario  Decimal              @map("precio_unitario") @db.Decimal(12, 2)
+  descuento       Decimal              @default(0) @db.Decimal(12, 2)
+
+  presupuesto Presupuesto @relation(fields: [presupuestoId], references: [id], onDelete: Cascade)
+  refaccion   Refaccion?  @relation(fields: [refaccionId], references: [id])
+
+  @@map("lineas_presupuesto")
+}
+
+model Refaccion {
+  id            Int      @id @default(autoincrement())
+  sku           String   @unique
+  nombre        String
+  categoria     String   @default("")
+  costo         Decimal  @default(0) @db.Decimal(12, 2)
+  precioVenta   Decimal  @map("precio_venta") @db.Decimal(12, 2)
+  stock         Decimal  @default(0) @db.Decimal(10, 2)
+  stockMinimo   Decimal  @default(0) @map("stock_minimo") @db.Decimal(10, 2)
+  ubicacion     String   @default("")
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en")
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+
+  lineasPresupuesto     LineaPresupuesto[]
+  movimientosInventario MovimientoInventario[]
+
+  @@map("refacciones")
+}
+
+model MovimientoInventario {
+  id          Int                     @id @default(autoincrement())
+  refaccionId Int                     @map("refaccion_id")
+  tipo        TipoMovimientoInventario
+  cantidad    Decimal                 @db.Decimal(10, 2)
+  ordenId     Int?                    @map("orden_id")
+  notas       String                  @default("")
+  creadoEn    DateTime                @default(now()) @map("creado_en")
+
+  refaccion Refaccion     @relation(fields: [refaccionId], references: [id])
+  orden     OrdenTrabajo? @relation(fields: [ordenId], references: [id])
+
+  @@map("movimientos_inventario")
+}
+
+model Notificacion {
+  id        Int              @id @default(autoincrement())
+  usuarioId Int              @map("usuario_id")
+  tipo      TipoNotificacion
+  titulo    String
+  mensaje   String
+  leida     Boolean          @default(false)
+  creadoEn  DateTime         @default(now()) @map("creado_en")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("notificaciones")
+}
