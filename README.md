@@ -71,6 +71,21 @@ npm run dev
 
 Abre http://localhost:5173 — el proxy de Vite reenvía `/api` al backend.
 
+### Frontend desde la raíz
+
+También puedes correr los comandos del frontend sin entrar a la carpeta:
+
+```bash
+npm run install:frontend
+npm run dev
+```
+
+Scripts disponibles en raíz:
+
+- `npm run dev` -> `frontend` dev server
+- `npm run build` -> build del frontend
+- `npm run preview` -> vista previa del build
+
 ## Endpoints principales
 
 | Método | Ruta | Descripción |
