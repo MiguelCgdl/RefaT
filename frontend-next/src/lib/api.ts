@@ -47,3 +47,12 @@ export const createRefaccion = (token: string, data: Record<string, unknown>) =>
 
 export const getDashboardResumen = (token: string) =>
   request<DashboardResumen>('/reportes/resumen/', { token });
+
+export const getPresupuestos = (token: string) => request<PaginatedResponse<any>>('/quotes/', { token });
+export const createPresupuesto = (token: string, data: Record<string, unknown>) =>
+  request<any>('/quotes/', { method: 'POST', body: JSON.stringify(data), token });
+export const exportPdfPresupuesto = (token: string, id: number) =>
+  request<Blob>(`/reportes/presupuesto/${id}/pdf`, { token });
+export const exportRefaccionesExcel = (token: string) =>
+  request<Blob>('/reportes/refacciones/excel', { token });
+

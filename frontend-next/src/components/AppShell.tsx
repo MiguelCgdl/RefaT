@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { LayoutDashboard, Users, Car, ClipboardList, Wrench, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Car, ClipboardList, Wrench, LogOut, Calculator } from 'lucide-react';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { logout, isAuthenticated } = useAuth();
@@ -25,6 +25,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { name: 'Clientes', href: '/clientes', icon: Users },
     { name: 'Vehículos', href: '/vehiculos', icon: Car },
     { name: 'Órdenes', href: '/ordenes', icon: ClipboardList },
+    { name: 'Presupuestos', href: '/presupuestos', icon: Calculator },
     { name: 'Refacciones', href: '/refacciones', icon: Wrench },
   ];
 
