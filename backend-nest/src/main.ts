@@ -1,3 +1,10 @@
+import * as path from 'path';
+import * as dotenv from 'dotenv';
+
+// Load .env before Prisma or NestJS modules initialize
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
+
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
