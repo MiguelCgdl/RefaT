@@ -66,6 +66,34 @@ export class PartsService {
       .then((r) => this.mapRefaccion(r));
   }
 
+  async updateRefaccion(id: number, dto: Partial<CreateRefaccionDto>) {
+    const ref = await this.prisma.refaccion.findUnique({ where: { id } });
+    if (!ref) throw new NotFoundException('Refacción no encontrada');
+    const row = await this.prisma.refaccion.update({
+      where: { id },
+      data: {
+        sku: dto.sku,
+        nombre: dto.nombre,
+        categoria: dto.categoria,
+        costo: dto.costo,
+        precioVenta: dto.precioVenta,
+        stock: dto.stock,
+        stockMinimo: dto.stockMinimo,
+        ubicacion: dto.ubicacion,
+        activo: dto.activo,
+      },
+    });
+    return this.mapRefaccion(row);
+  }
+
+  async deleteRefaccion(id: number) {
+    const ref = await this.prisma.refaccion.findUnique({ where: { id } });
+    if (!ref) throw new NotFoundException('Refacción no encontrada');
+    await this.prisma.refaccion.delete({ where: { id } });
+    return { message: 'Refacción eliminada' };
+  }
+
+
   async findAllMovimientos(page = 1, pageSize = 20) {
     const [total, rows] = await this.prisma.$transaction([
       this.prisma.movimientoInventario.count(),

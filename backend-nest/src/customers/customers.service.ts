@@ -47,4 +47,10 @@ export class CustomersService {
     await this.findOne(id);
     return this.prisma.cliente.update({ where: { id }, data: dto });
   }
+
+  async remove(id: number) {
+    await this.findOne(id);
+    await this.prisma.cliente.delete({ where: { id } });
+    return { message: 'Cliente eliminado' };
+  }
 }

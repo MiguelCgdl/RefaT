@@ -124,4 +124,10 @@ export class WorkordersService {
     });
     return this.mapOrden(row);
   }
+
+  async remove(id: number) {
+    await this.findOne(id);
+    await this.prisma.ordenTrabajo.delete({ where: { id } });
+    return { message: 'Orden eliminada' };
+  }
 }

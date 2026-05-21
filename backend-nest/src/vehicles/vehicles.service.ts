@@ -120,4 +120,10 @@ export class VehiclesService {
     });
     return this.mapVehiculo(row);
   }
+
+  async remove(id: number) {
+    await this.findOne(id);
+    await this.prisma.vehiculo.delete({ where: { id } });
+    return { message: 'Vehículo eliminado' };
+  }
 }

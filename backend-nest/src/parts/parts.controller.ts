@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { PartsService } from './parts.service';
@@ -18,6 +18,16 @@ export class PartsController {
   @Post('refacciones')
   createRefaccion(@Body() dto: CreateRefaccionDto) {
     return this.service.createRefaccion(dto);
+  }
+
+  @Patch('refacciones/:id')
+  updateRefaccion(@Param('id', ParseIntPipe) id: number, @Body() dto: Partial<CreateRefaccionDto>) {
+    return this.service.updateRefaccion(id, dto);
+  }
+
+  @Delete('refacciones/:id')
+  deleteRefaccion(@Param('id', ParseIntPipe) id: number) {
+    return this.service.deleteRefaccion(id);
   }
 
   @Get('movimientos-inventario')

@@ -32,18 +32,34 @@ export const login = (username: string, password: string) =>
 export const getClientes = (token: string) => request<PaginatedResponse<Cliente>>('/clientes/', { token });
 export const createCliente = (token: string, data: Partial<Cliente>) =>
   request<Cliente>('/clientes/', { method: 'POST', body: JSON.stringify(data), token });
+export const updateCliente = (token: string, id: number, data: Partial<Cliente>) =>
+  request<Cliente>(`/clientes/${id}`, { method: 'PATCH', body: JSON.stringify(data), token });
+export const deleteCliente = (token: string, id: number) =>
+  request<void>(`/clientes/${id}`, { method: 'DELETE', token });
 
 export const getVehiculos = (token: string) => request<PaginatedResponse<Vehiculo>>('/vehiculos/', { token });
 export const createVehiculo = (token: string, data: Record<string, unknown>) =>
   request<Vehiculo>('/vehiculos/', { method: 'POST', body: JSON.stringify(data), token });
+export const updateVehiculo = (token: string, id: number, data: Record<string, unknown>) =>
+  request<Vehiculo>(`/vehiculos/${id}`, { method: 'PATCH', body: JSON.stringify(data), token });
+export const deleteVehiculo = (token: string, id: number) =>
+  request<void>(`/vehiculos/${id}`, { method: 'DELETE', token });
 
 export const getOrdenes = (token: string) => request<PaginatedResponse<OrdenTrabajo>>('/ordenes/', { token });
 export const createOrden = (token: string, data: Record<string, unknown>) =>
   request<OrdenTrabajo>('/ordenes/', { method: 'POST', body: JSON.stringify(data), token });
+export const updateOrden = (token: string, id: number, data: Record<string, unknown>) =>
+  request<OrdenTrabajo>(`/ordenes/${id}`, { method: 'PATCH', body: JSON.stringify(data), token });
+export const deleteOrden = (token: string, id: number) =>
+  request<void>(`/ordenes/${id}`, { method: 'DELETE', token });
 
 export const getRefacciones = (token: string) => request<PaginatedResponse<Refaccion>>('/refacciones/', { token });
 export const createRefaccion = (token: string, data: Record<string, unknown>) =>
   request<Refaccion>('/refacciones/', { method: 'POST', body: JSON.stringify(data), token });
+export const updateRefaccion = (token: string, id: number, data: Record<string, unknown>) =>
+  request<Refaccion>(`/refacciones/${id}`, { method: 'PATCH', body: JSON.stringify(data), token });
+export const deleteRefaccion = (token: string, id: number) =>
+  request<void>(`/refacciones/${id}`, { method: 'DELETE', token });
 
 export const getDashboardResumen = (token: string) =>
   request<DashboardResumen>('/reportes/resumen/', { token });
