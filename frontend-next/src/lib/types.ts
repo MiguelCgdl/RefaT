@@ -36,7 +36,10 @@ export interface OrdenTrabajo {
   vehiculo_placas?: string;
   estado: string;
   queja_cliente: string;
+  diagnostico?: string;
   prioridad: string;
+  mecanico?: string;
+  fecha_ingreso?: string;
 }
 
 export interface Refaccion {

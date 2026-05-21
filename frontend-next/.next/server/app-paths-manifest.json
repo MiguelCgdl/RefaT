@@ -1,7 +1,7 @@
 {
-  "/refacciones/page": "app/refacciones/page.js",
+  "/ordenes/[id]/page": "app/ordenes/[id]/page.js",
   "/ordenes/page": "app/ordenes/page.js",
+  "/clientes/page": "app/clientes/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/presupuestos/page": "app/presupuestos/page.js",
-  "/clientes/page": "app/clientes/page.js"
+  "/vehiculos/page": "app/vehiculos/page.js"
 }

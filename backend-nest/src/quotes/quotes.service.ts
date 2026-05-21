@@ -242,4 +242,30 @@ export class QuotesService {
 
     return this.mapPresupuesto(actualizado);
   }
+
+  async deleteLinea(lineaId: number) {
+    const linea = await this.prisma.lineaPresupuesto.findUnique({ where: { id: lineaId } });
+    if (!linea) throw new NotFoundException('Línea de presupuesto no encontrada');
+    await this.prisma.lineaPresupuesto.delete({ where: { id: lineaId } });
+    await this.recalcularTotales(linea.presupuestoId);
+    return this.findOne(linea.presupuestoId);
+  }
+
+  async update(id: number, dto: { estado?: string; observaciones?: string }) {
+    await this.findOne(id);
+    const row = await this.prisma.presupuesto.update({
+      where: { id },
+      data: {
+        ...(dto.estado ? { estado: dto.estado as EstadoPresupuesto } : {}),
+      },
+      include: { orden: { select: { folio: true } }, lineas: true },
+    });
+    return this.mapPresupuesto(row);
+  }
+
+  async remove(id: number) {
+    await this.findOne(id);
+    await this.prisma.presupuesto.delete({ where: { id } });
+    return { message: 'Presupuesto eliminado' };
+  }
 }

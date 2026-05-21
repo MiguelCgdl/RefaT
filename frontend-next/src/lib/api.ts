@@ -68,9 +68,15 @@ export const getPresupuestos = (token: string) => request<PaginatedResponse<any>
 export const getPresupuesto = (token: string, id: number) => request<any>(`/presupuestos/${id}`, { token });
 export const createPresupuesto = (token: string, data: Record<string, unknown>) =>
   request<any>('/presupuestos', { method: 'POST', body: JSON.stringify(data), token });
+export const updatePresupuesto = (token: string, id: number, data: Record<string, unknown>) =>
+  request<any>(`/presupuestos/${id}`, { method: 'PATCH', body: JSON.stringify(data), token });
+export const deletePresupuesto = (token: string, id: number) =>
+  request<void>(`/presupuestos/${id}`, { method: 'DELETE', token });
 
 export const addLineaPresupuesto = (token: string, data: Record<string, unknown>) =>
   request<any>('/lineas-presupuesto', { method: 'POST', body: JSON.stringify(data), token });
+export const deleteLineaPresupuesto = (token: string, id: number) =>
+  request<any>(`/lineas-presupuesto/${id}`, { method: 'DELETE', token });
 
 export const enviarPresupuesto = (token: string, id: number, method: 'email' | 'whatsapp') =>
   request<any>(`/presupuestos/${id}/enviar`, { method: 'POST', body: JSON.stringify({ method }), token });

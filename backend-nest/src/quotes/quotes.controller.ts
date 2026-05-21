@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { QuotesService } from './quotes.service';
@@ -38,5 +38,23 @@ export class QuotesController {
   @Post('lineas-presupuesto')
   createLinea(@Body() dto: CreateLineaDto) {
     return this.service.createLinea(dto);
+  }
+
+  @Delete('lineas-presupuesto/:id')
+  deleteLinea(@Param('id', ParseIntPipe) id: number) {
+    return this.service.deleteLinea(id);
+  }
+
+  @Patch('presupuestos/:id')
+  updatePresupuesto(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: { estado?: string; observaciones?: string },
+  ) {
+    return this.service.update(id, dto);
+  }
+
+  @Delete('presupuestos/:id')
+  deletePresupuesto(@Param('id', ParseIntPipe) id: number) {
+    return this.service.remove(id);
   }
 }
