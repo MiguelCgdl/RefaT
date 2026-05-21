@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { LayoutDashboard, Users, Car, ClipboardList, Wrench, LogOut, Calculator } from 'lucide-react';
 
@@ -10,12 +10,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { logout, isAuthenticated } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated && pathname !== '/login') {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && !isAuthenticated && pathname !== '/login') {
       router.replace('/login');
     }
-  }, [isAuthenticated, pathname, router]);
+  }, [mounted, isAuthenticated, pathname, router]);
+
+  // Prevent hydration mismatch: don't render auth-dependent UI until client is ready
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   if (pathname === '/login') return <>{children}</>;
   if (!isAuthenticated) return null;
