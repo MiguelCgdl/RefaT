@@ -48,11 +48,19 @@ export const createRefaccion = (token: string, data: Record<string, unknown>) =>
 export const getDashboardResumen = (token: string) =>
   request<DashboardResumen>('/reportes/resumen/', { token });
 
-export const getPresupuestos = (token: string) => request<PaginatedResponse<any>>('/quotes/', { token });
+export const getPresupuestos = (token: string) => request<PaginatedResponse<any>>('/presupuestos', { token });
+export const getPresupuesto = (token: string, id: number) => request<any>(`/presupuestos/${id}`, { token });
 export const createPresupuesto = (token: string, data: Record<string, unknown>) =>
-  request<any>('/quotes/', { method: 'POST', body: JSON.stringify(data), token });
+  request<any>('/presupuestos', { method: 'POST', body: JSON.stringify(data), token });
+
+export const addLineaPresupuesto = (token: string, data: Record<string, unknown>) =>
+  request<any>('/lineas-presupuesto', { method: 'POST', body: JSON.stringify(data), token });
+
+export const enviarPresupuesto = (token: string, id: number, method: 'email' | 'whatsapp') =>
+  request<any>(`/presupuestos/${id}/enviar`, { method: 'POST', body: JSON.stringify({ method }), token });
+
 export const exportPdfPresupuesto = (token: string, id: number) =>
-  request<Blob>(`/reportes/presupuesto/${id}/pdf`, { token });
+  request<Blob>(`/reportes/presupuestos/${id}/pdf`, { token });
 export const exportRefaccionesExcel = (token: string) =>
   request<Blob>('/reportes/refacciones/excel', { token });
 

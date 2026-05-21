@@ -3,7 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createOrden, getOrdenes, getVehiculos } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, Car, ClipboardList, AlertCircle, FileText } from 'lucide-react';
+import { Plus, Car, ClipboardList, AlertCircle, FileText, Eye } from 'lucide-react';
+import Link from 'next/link';
 
 export default function OrdenesPage() {
   const { token } = useAuth();
@@ -113,6 +114,7 @@ export default function OrdenesPage() {
                   <th className="px-6 py-4 font-semibold text-slate-700 text-sm">Vehículo (Placas)</th>
                   <th className="px-6 py-4 font-semibold text-slate-700 text-sm">Estado</th>
                   <th className="px-6 py-4 font-semibold text-slate-700 text-sm">Prioridad</th>
+                  <th className="px-6 py-4 font-semibold text-slate-700 text-sm text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -139,6 +141,14 @@ export default function OrdenesPage() {
                       }`}>
                         {o.prioridad}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <Link
+                        href={`/ordenes/${o.id}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-medium transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> Ver Detalle
+                      </Link>
                     </td>
                   </tr>
                 ))}

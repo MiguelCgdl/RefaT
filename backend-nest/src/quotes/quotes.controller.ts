@@ -30,6 +30,11 @@ export class QuotesController {
     return this.service.aprobar(id);
   }
 
+  @Post('presupuestos/:id/enviar')
+  enviar(@Param('id', ParseIntPipe) id: number, @Body('method') method: 'email' | 'whatsapp') {
+    return this.service.enviar(id, method);
+  }
+
   @Post('lineas-presupuesto')
   createLinea(@Body() dto: CreateLineaDto) {
     return this.service.createLinea(dto);

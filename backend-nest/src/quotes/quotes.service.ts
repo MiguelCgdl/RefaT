@@ -206,4 +206,40 @@ export class QuotesService {
       return this.mapPresupuesto(actualizado);
     });
   }
+
+  async enviar(id: number, method: 'email' | 'whatsapp') {
+    const presupuesto = await this.prisma.presupuesto.findUnique({
+      where: { id },
+      include: {
+        orden: {
+          include: {
+            vehiculo: {
+              include: { cliente: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!presupuesto) throw new NotFoundException('Presupuesto no encontrado');
+
+    const cliente = presupuesto.orden.vehiculo.cliente;
+    if (method === 'email' && !cliente.email) {
+      throw new BadRequestException('El cliente no tiene un correo electrónico registrado.');
+    }
+    if (method === 'whatsapp' && !cliente.telefono) {
+      throw new BadRequestException('El cliente no tiene un teléfono registrado.');
+    }
+
+    // TODO: In a real app, you would send the email or whatsapp here via external APIs.
+    console.log(`Enviando presupuesto ${presupuesto.id} a ${cliente.nombre} vía ${method}...`);
+
+    const actualizado = await this.prisma.presupuesto.update({
+      where: { id },
+      data: { estado: EstadoPresupuesto.ENVIADO },
+      include: { orden: { select: { folio: true } }, lineas: true },
+    });
+
+    return this.mapPresupuesto(actualizado);
+  }
 }

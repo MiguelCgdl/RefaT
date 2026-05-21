@@ -3,7 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createCliente, getClientes } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, User, Mail, Phone, FileText } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, User, Mail, Phone, FileText, Car } from 'lucide-react';
 
 export default function ClientesPage() {
   const { token } = useAuth();
@@ -14,15 +15,33 @@ export default function ClientesPage() {
     enabled: Boolean(token),
   });
 
+  const [incluirVehiculo, setIncluirVehiculo] = useState(false);
+
   const mutation = useMutation({
-    mutationFn: (form: FormData) =>
-      createCliente(token!, {
+    mutationFn: (form: FormData) => {
+      const data: any = {
         nombre: String(form.get('nombre')),
         email: String(form.get('email') ?? ''),
         telefono: String(form.get('telefono') ?? ''),
         rfc: String(form.get('rfc') ?? ''),
-      }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['clientes'] }),
+      };
+
+      if (incluirVehiculo) {
+        data.vehiculo = {
+          marca: String(form.get('marca') ?? ''),
+          modelo: String(form.get('modelo') ?? ''),
+          anio: parseInt(String(form.get('anio')) || '0', 10),
+          placas: String(form.get('placas') ?? ''),
+          color: String(form.get('color') ?? ''),
+        };
+      }
+
+      return createCliente(token!, data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['clientes'] });
+      setIncluirVehiculo(false);
+    },
   });
 
   return (
@@ -91,13 +110,48 @@ export default function ClientesPage() {
             />
           </div>
 
+          <div className="md:col-span-2 mt-4 border-t border-slate-100 pt-4">
+            <label className="flex items-center gap-2 cursor-pointer mb-4">
+              <input
+                type="checkbox"
+                checked={incluirVehiculo}
+                onChange={(e) => setIncluirVehiculo(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                <Car className="w-4 h-4 text-slate-400" /> Registrar Vehículo del Cliente
+              </span>
+            </label>
+
+            {incluirVehiculo && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100 mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-600">Marca *</label>
+                  <input name="marca" required={incluirVehiculo} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20" placeholder="Ej. Toyota" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-600">Modelo *</label>
+                  <input name="modelo" required={incluirVehiculo} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20" placeholder="Ej. Corolla" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-600">Año *</label>
+                  <input name="anio" type="number" required={incluirVehiculo} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20" placeholder="2020" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-600">Placas *</label>
+                  <input name="placas" required={incluirVehiculo} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20" placeholder="ABC-123" />
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="md:col-span-2 pt-2">
             <button
               type="submit"
               disabled={mutation.isPending}
               className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm shadow-blue-600/20 disabled:opacity-50 flex items-center gap-2"
             >
-              {mutation.isPending ? 'Guardando...' : 'Guardar Cliente'}
+              {mutation.isPending ? 'Guardando...' : 'Guardar Cliente' + (incluirVehiculo ? ' y Vehículo' : '')}
             </button>
           </div>
         </form>

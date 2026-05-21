@@ -43,7 +43,9 @@ export interface Refaccion {
   id: number;
   sku: string;
   nombre: string;
+  descripcion?: string;
   stock: string;
+  costo: string;
   precio_venta: string;
   bajo_stock?: boolean;
 }

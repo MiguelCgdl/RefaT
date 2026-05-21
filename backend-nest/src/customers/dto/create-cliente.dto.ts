@@ -1,4 +1,42 @@
-import { IsBoolean, IsEmail, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsOptional, IsString, MaxLength, ValidateNested, IsInt, Min, Max } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class VehiculoNestedDto {
+  @IsString()
+  @MaxLength(80)
+  marca!: string;
+
+  @IsString()
+  @MaxLength(80)
+  modelo!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(17)
+  serieVin?: string;
+
+  @IsInt()
+  @Min(1900)
+  @Max(2100)
+  anio!: number;
+
+  @IsString()
+  @MaxLength(15)
+  placas!: string;
+
+  @IsOptional()
+  @IsString()
+  color?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  kilometrajeActual?: number;
+
+  @IsOptional()
+  @IsString()
+  notas?: string;
+}
 
 export class CreateClienteDto {
   @IsString()
@@ -28,4 +66,9 @@ export class CreateClienteDto {
   @IsOptional()
   @IsBoolean()
   activo?: boolean;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => VehiculoNestedDto)
+  vehiculo?: VehiculoNestedDto;
 }

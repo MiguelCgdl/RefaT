@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPresupuesto, getPresupuestos, getOrdenes, exportPdfPresupuesto } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { Plus, FileText, Calculator, Download, AlertCircle, FileSpreadsheet } from 'lucide-react';
+import Link from 'next/link';
 
 export default function PresupuestosPage() {
   const { token } = useAuth();
@@ -141,6 +142,13 @@ export default function PresupuestosPage() {
                       ${Number(p.total).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 flex justify-center gap-2">
+                      <Link
+                        href={`/presupuestos/${p.id}`}
+                        className="p-2 bg-slate-100 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Ver y Editar"
+                      >
+                        <FileText className="w-4 h-4" />
+                      </Link>
                       <button
                         onClick={() => downloadPdf(p.id, p.orden_folio)}
                         className="p-2 bg-slate-100 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

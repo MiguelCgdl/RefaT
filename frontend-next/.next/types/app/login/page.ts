@@ -1,4 +1,4 @@
-// File: /Users/Mike/Documents/GitHub/Refa/frontend-next/src/app/login/page.tsx
+// File: /Users/juanmiguelcervantesbarocio/Documents/GitHub/RefaT/frontend-next/src/app/login/page.tsx
 import * as entry from '../../../../src/app/login/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

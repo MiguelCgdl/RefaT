@@ -25,7 +25,22 @@ export class CustomersService {
   }
 
   create(dto: CreateClienteDto) {
-    return this.prisma.cliente.create({ data: dto });
+    const { vehiculo, ...clienteData } = dto;
+    return this.prisma.cliente.create({
+      data: {
+        ...clienteData,
+        ...(vehiculo
+          ? {
+              vehiculos: {
+                create: vehiculo,
+              },
+            }
+          : {}),
+      },
+      include: {
+        vehiculos: true,
+      },
+    });
   }
 
   async update(id: number, dto: UpdateClienteDto) {
