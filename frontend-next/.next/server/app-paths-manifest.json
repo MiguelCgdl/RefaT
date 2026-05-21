@@ -1,7 +1,9 @@
 {
-  "/ordenes/[id]/page": "app/ordenes/[id]/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/ordenes/page": "app/ordenes/page.js",
   "/clientes/page": "app/clientes/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/vehiculos/page": "app/vehiculos/page.js"
+  "/login/page": "app/login/page.js",
+  "/refacciones/page": "app/refacciones/page.js",
+  "/vehiculos/page": "app/vehiculos/page.js",
+  "/ordenes/[id]/page": "app/ordenes/[id]/page.js"
 }
