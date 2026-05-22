@@ -4,21 +4,30 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  const passwordHash = await bcrypt.hash('admin', 10);
+  const adminUsername = process.env.ADMIN_USERNAME;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  
+  if (!adminUsername || !adminPassword) {
+    console.error('ERROR: ADMIN_USERNAME and ADMIN_PASSWORD environment variables must be set');
+    console.error('For local development, create a .env file with these variables');
+    process.exit(1);
+  }
+  
+  const passwordHash = await bcrypt.hash(adminPassword, 10);
 
   await prisma.usuario.upsert({
-    where: { username: 'admin' },
+    where: { username: adminUsername },
     update: { passwordHash, rol: RolUsuario.ADMIN, activo: true },
     create: {
-      username: 'admin',
-      email: 'admin@refa.local',
+      username: adminUsername,
+      email: `${adminUsername}@refa.local`,
       passwordHash,
       rol: RolUsuario.ADMIN,
       activo: true,
     },
   });
 
-  console.log('Seed OK: usuario admin/admin');
+  console.log(`Seed OK: usuario ${adminUsername}/${adminPassword}`);
 }
 
 main()

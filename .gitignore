@@ -22,3 +22,9 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Security - files that may contain credentials
+debug-pass-*.js
+*.local.env
+secrets.*
+credentials.*

@@ -1,15 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPresupuesto, addLineaPresupuesto, getRefacciones, enviarPresupuesto } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { ArrowLeft, Plus, Send, Mail, MessageCircle, Package, Wrench } from 'lucide-react';
+import { Plus, Send, Package, Wrench } from 'lucide-react';
 import Link from 'next/link';
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
+import { Button } from 'primereact/button';
+import { InputText } from 'primereact/inputtext';
+import { Dropdown } from 'primereact/dropdown';
+import { Tag } from 'primereact/tag';
+import { Toast } from 'primereact/toast';
+import { ProgressBar } from 'primereact/progressbar';
 
 export default function PresupuestoDetallePage({ params }: { params: { id: string } }) {
   const { token } = useAuth();
   const qc = useQueryClient();
+  const toast = useRef<Toast>(null);
   const id = parseInt(params.id, 10);
 
   const { data: presupuesto, isLoading } = useQuery({
@@ -27,55 +36,56 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
   const [tipoLinea, setTipoLinea] = useState<'SERVICIO' | 'REFACCION'>('REFACCION');
 
   const addLineaMutation = useMutation({
-    mutationFn: (form: FormData) => {
-      const data: any = {
-        presupuestoId: id,
-        tipo: tipoLinea,
-        descripcion: String(form.get('descripcion') ?? ''),
-        cantidad: Number(form.get('cantidad')),
-        descuento: Number(form.get('descuento') || 0),
-      };
-      
-      if (tipoLinea === 'REFACCION') {
-        data.refaccionId = Number(form.get('refaccionId'));
-        // El backend toma automáticamente el costo de la refacción si no enviamos precioUnitario
-      } else {
-        data.precioUnitario = Number(form.get('precioUnitario'));
-      }
-      return addLineaPresupuesto(token!, data);
+    mutationFn: (data: any) => addLineaPresupuesto(token!, {
+      ...data,
+      presupuestoId: id,
+      tipo: tipoLinea,
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['presupuesto', id] });
+      toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Concepto agregado' });
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['presupuesto', id] }),
+    onError: (err: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: err.message }),
   });
 
   const enviarMutation = useMutation({
     mutationFn: (method: 'email' | 'whatsapp') => enviarPresupuesto(token!, id, method),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['presupuesto', id] });
-      alert('Presupuesto enviado exitosamente');
+      toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Presupuesto enviado exitosamente' });
     },
-    onError: (err: any) => alert(err.message),
+    onError: (err: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: err.message }),
   });
 
   if (isLoading || !presupuesto) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <ProgressBar mode="indeterminate" style={{ height: '6px', width: '300px' }} />
+        <span className="text-slate-500 font-medium">Cargando presupuesto...</span>
       </div>
     );
   }
 
+  const refaccionOptions = refacciones?.results?.map((r: any) => ({
+    label: `[${r.sku}] ${r.nombre} — Stock: ${r.stock}`,
+    value: r.id
+  })) || [];
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center gap-4">
-        <Link href="/presupuestos" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Presupuesto v{presupuesto.version} (Orden: {presupuesto.orden_folio})
-          </h2>
-          <div className="flex items-center gap-3 mt-1">
-            <span className="text-sm font-medium text-slate-500">Estado: {presupuesto.estado.toUpperCase()}</span>
+      <Toast ref={toast} />
+      
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link href="/presupuestos">
+            <Button icon="pi pi-arrow-left" rounded text severity="secondary" className="border border-white/10 bg-white/5 hover:bg-slate-100" />
+          </Link>
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+              Presupuesto v{presupuesto.version}
+              <Tag value={presupuesto.estado.toUpperCase()} severity={presupuesto.estado === 'aprobado' ? 'success' : 'info'} />
+            </h2>
+            <p className="text-slate-500 text-sm mt-1 font-medium italic">Referencia: <span className="text-blue-600 font-bold">{presupuesto.orden_folio}</span></p>
           </div>
         </div>
       </div>
@@ -83,168 +93,149 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Formulario de agregar líneas */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <Plus className="w-5 h-5 text-blue-500" /> Agregar Concepto
+          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-3d">
+            <h3 className="text-xl font-black text-slate-800 flex items-center gap-3 mb-6">
+              <div className="p-2 bg-slate-100 rounded-lg">
+                <Plus className="w-4 h-4 text-blue-600" />
+              </div>
+              Agregar Concepto
             </h3>
             
-            <div className="flex gap-2 mb-6 p-1 bg-slate-100 rounded-lg">
+            <div className="flex gap-2 mb-6 p-1 bg-slate-100 rounded-2xl border border-white/5">
               <button
                 type="button"
                 onClick={() => setTipoLinea('REFACCION')}
-                className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all flex justify-center items-center gap-2 ${tipoLinea === 'REFACCION' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex justify-center items-center gap-2 ${tipoLinea === 'REFACCION' ? 'bg-white text-blue-600 shadow-lg shadow-blue-600/10 ring-1 ring-blue-500/10' : 'text-slate-500 hover:text-slate-700'}`}
               >
                 <Package className="w-4 h-4" /> Refacción
               </button>
               <button
                 type="button"
                 onClick={() => setTipoLinea('SERVICIO')}
-                className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all flex justify-center items-center gap-2 ${tipoLinea === 'SERVICIO' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex justify-center items-center gap-2 ${tipoLinea === 'SERVICIO' ? 'bg-white text-blue-600 shadow-lg shadow-blue-600/10 ring-1 ring-blue-500/10' : 'text-slate-500 hover:text-slate-700'}`}
               >
                 <Wrench className="w-4 h-4" /> Mano de Obra
               </button>
             </div>
 
             <form
-              className="space-y-4"
+              className="grid grid-cols-1 gap-4"
               onSubmit={(e) => {
                 e.preventDefault();
-                addLineaMutation.mutate(new FormData(e.currentTarget));
-                e.currentTarget.reset();
+                const fd = new FormData(e.currentTarget);
+                const data: any = {
+                  cantidad: Number(fd.get('cantidad')),
+                  descuento: Number(fd.get('descuento') || 0),
+                };
+                if (tipoLinea === 'REFACCION') {
+                  data.refaccionId = Number(fd.get('refaccionId'));
+                } else {
+                  data.descripcion = String(fd.get('descripcion'));
+                  data.precioUnitario = Number(fd.get('precioUnitario'));
+                }
+                addLineaMutation.mutate(data);
+                (e.currentTarget as HTMLFormElement).reset();
               }}
             >
               {tipoLinea === 'REFACCION' ? (
-                <>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700">Refacción del Inventario *</label>
-                    <select name="refaccionId" required className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20 bg-white">
-                      <option value="">Seleccionar pieza...</option>
-                      {refacciones?.results?.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.nombre} - Stock: {r.stock} (Costo: ${r.costo})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Refacción del Inventario *</label>
+                  <Dropdown name="refaccionId" options={refaccionOptions} required placeholder="Seleccionar pieza…" className="rounded-xl border-slate-200" />
+                </div>
               ) : (
-                <>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700">Descripción del Servicio *</label>
-                    <input name="descripcion" required className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20" placeholder="Ej. Cambio de balatas" />
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Descripción del Servicio *</label>
+                    <InputText name="descripcion" required className="rounded-xl border-slate-200 p-3" placeholder="Ej. Cambio de balatas" />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700">Costo de Mano de Obra ($) *</label>
-                    <input name="precioUnitario" type="number" step="0.01" required className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20" placeholder="500.00" />
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Costo de Mano de Obra ($) *</label>
+                    <InputText name="precioUnitario" type="number" step="0.01" required className="rounded-xl border-slate-200 p-3" placeholder="500.00" />
                   </div>
-                </>
+                </div>
               )}
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Cantidad *</label>
-                  <input name="cantidad" type="number" min="1" step="0.01" defaultValue="1" required className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20" />
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Cantidad *</label>
+                  <InputText name="cantidad" type="number" min="1" step="0.01" defaultValue="1" required className="rounded-xl border-slate-200 p-3" />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Descuento ($)</label>
-                  <input name="descuento" type="number" min="0" step="0.01" defaultValue="0" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20" />
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Descuento ($)</label>
+                  <InputText name="descuento" type="number" min="0" step="0.01" defaultValue="0" className="rounded-xl border-slate-200 p-3" />
                 </div>
               </div>
 
-              <button
+              <Button
                 type="submit"
-                disabled={addLineaMutation.isPending}
-                className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-              >
-                {addLineaMutation.isPending ? 'Agregando...' : 'Agregar Concepto'}
-              </button>
+                label={addLineaMutation.isPending ? 'Agregando...' : 'Agregar Concepto'}
+                icon="pi pi-plus"
+                loading={addLineaMutation.isPending}
+                className="w-full py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 border-none shadow-xl shadow-slate-900/10 font-bold mt-2"
+              />
             </form>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-              <Send className="w-5 h-5 text-green-500" /> Enviar Presupuesto
+          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-3d space-y-6">
+            <h3 className="text-xl font-black text-slate-800 flex items-center gap-3">
+              <div className="p-2 bg-green-50 rounded-lg">
+                <Send className="w-5 h-5 text-green-600" />
+              </div>
+              Enviar al Cliente
             </h3>
-            <p className="text-sm text-slate-500">Envía el presupuesto al cliente utilizando sus datos de contacto registrados.</p>
+            <p className="text-sm text-slate-500 font-medium">Notifica al cliente enviando este presupuesto por sus medios de contacto.</p>
             <div className="flex flex-col gap-3">
-              <button
+              <Button
+                label="Enviar por Correo"
+                icon="pi pi-envelope"
                 onClick={() => enviarMutation.mutate('email')}
-                disabled={enviarMutation.isPending}
-                className="w-full py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <Mail className="w-4 h-4" /> Enviar por Correo
-              </button>
-              <button
+                loading={enviarMutation.isPending}
+                className="w-full py-4 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100 font-bold transition-all"
+              />
+              <Button
+                label="Enviar por WhatsApp"
+                icon="pi pi-whatsapp"
                 onClick={() => enviarMutation.mutate('whatsapp')}
-                disabled={enviarMutation.isPending}
-                className="w-full py-2 bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <MessageCircle className="w-4 h-4" /> Enviar por WhatsApp
-              </button>
+                loading={enviarMutation.isPending}
+                className="w-full py-4 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100 font-bold transition-all"
+              />
             </div>
           </div>
         </div>
 
         {/* Tabla de Conceptos y Totales */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-slate-100">
-            <h3 className="text-lg font-semibold text-slate-900">Conceptos (Piezas y Mano de Obra)</h3>
+        <div className="lg:col-span-2 bg-white rounded-[2.5rem] border border-slate-100 shadow-3d overflow-hidden flex flex-col">
+          <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Conceptos del Presupuesto</h3>
           </div>
           
-          <div className="flex-1 overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-6 py-3 font-semibold text-slate-700 text-xs uppercase tracking-wider">Concepto</th>
-                  <th className="px-6 py-3 font-semibold text-slate-700 text-xs uppercase tracking-wider">Cant</th>
-                  <th className="px-6 py-3 font-semibold text-slate-700 text-xs uppercase tracking-wider text-right">Precio U.</th>
-                  <th className="px-6 py-3 font-semibold text-slate-700 text-xs uppercase tracking-wider text-right">Importe</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {presupuesto.lineas?.map((l: any) => (
-                  <tr key={l.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-slate-900 flex items-center gap-2">
-                        {l.tipo === 'refaccion' ? <Package className="w-3.5 h-3.5 text-blue-500" /> : <Wrench className="w-3.5 h-3.5 text-amber-500" />}
-                        {l.descripcion || 'Pieza del inventario'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
-                      {Number(l.cantidad)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-600 text-right">
-                      ${Number(l.precio_unitario).toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-slate-900 text-right">
-                      ${Number(l.importe_neto).toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-                {!presupuesto.lineas?.length && (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-slate-500 text-sm">
-                      Aún no hay piezas o mano de obra en este presupuesto.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <DataTable value={presupuesto.lineas} className="p-datatable-sm" emptyMessage="Sin conceptos aún.">
+            <Column header="Concepto" body={(l) => (
+              <div className="flex items-center gap-3">
+                <div className={`p-1.5 rounded-lg ${l.tipo === 'refaccion' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'}`}>
+                  {l.tipo === 'refaccion' ? <Package className="w-3.5 h-3.5" /> : <Wrench className="w-3.5 h-3.5" />}
+                </div>
+                <span className="font-bold text-slate-700">{l.descripcion || 'Pieza del inventario'}</span>
+              </div>
+            )} />
+            <Column field="cantidad" header="Cant." className="text-center" />
+            <Column header="Precio U." body={(l) => `$${Number(l.precio_unitario).toFixed(2)}`} className="text-right" />
+            <Column header="Importe" body={(l) => <span className="font-black text-slate-900">${Number(l.importe_neto).toFixed(2)}</span>} className="text-right" />
+          </DataTable>
 
-          <div className="bg-slate-50 p-6 border-t border-slate-100">
+          <div className="bg-slate-50/80 p-10 border-t border-slate-100 mt-auto">
             <div className="max-w-xs ml-auto space-y-3">
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>Subtotal (Piezas + Mano de Obra)</span>
-                <span className="font-medium text-slate-900">${Number(presupuesto.subtotal).toFixed(2)}</span>
+              <div className="flex justify-between text-sm font-bold text-slate-400 uppercase tracking-widest">
+                <span>Subtotal</span>
+                <span className="text-slate-600">${Number(presupuesto.subtotal).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm text-slate-600">
+              <div className="flex justify-between text-sm font-bold text-slate-400 uppercase tracking-widest">
                 <span>IVA (16%)</span>
-                <span className="font-medium text-slate-900">${Number(presupuesto.iva).toFixed(2)}</span>
+                <span className="text-slate-600">${Number(presupuesto.iva).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-lg font-bold text-slate-900 pt-3 border-t border-slate-200">
-                <span>Total</span>
-                <span>${Number(presupuesto.total).toFixed(2)}</span>
+              <div className="flex justify-between text-2xl font-black text-slate-900 pt-6 border-t border-slate-200">
+                <span className="uppercase tracking-tight">Total</span>
+                <span className="text-blue-600">${Number(presupuesto.total).toFixed(2)}</span>
               </div>
             </div>
           </div>

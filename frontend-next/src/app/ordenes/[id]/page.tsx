@@ -1,14 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { getRefacciones, createPresupuesto, getPresupuestos, addLineaPresupuesto } from '@/lib/api';
 import Link from 'next/link';
 import {
-  ArrowLeft, ClipboardList, Package, Wrench, Plus, DollarSign,
-  CheckCircle, Clock, AlertCircle, FileText
+  ArrowLeft, ClipboardList, Package, Wrench, Plus,
+  CheckCircle, AlertCircle, FileText
 } from 'lucide-react';
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
+import { Button } from 'primereact/button';
+import { InputText } from 'primereact/inputtext';
+import { InputTextarea } from 'primereact/inputtextarea';
+import { Dropdown } from 'primereact/dropdown';
+import { Tag } from 'primereact/tag';
+import { Toast } from 'primereact/toast';
+import { ProgressBar } from 'primereact/progressbar';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api';
 
@@ -31,6 +40,7 @@ async function request<T>(path: string, token: string, options: RequestInit = {}
 export default function OrdenDetallePage({ params }: { params: { id: string } }) {
   const { token } = useAuth();
   const qc = useQueryClient();
+  const toast = useRef<Toast>(null);
   const ordenId = parseInt(params.id, 10);
 
   const { data: orden, isLoading: loadingOrden } = useQuery({
@@ -61,30 +71,24 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
 
   const crearPresupuestoMutation = useMutation({
     mutationFn: () => createPresupuesto(token!, { ordenId }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['presupuestos-orden', ordenId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['presupuestos-orden', ordenId] });
+      toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Presupuesto creado' });
+    },
+    onError: (e: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: e.message }),
   });
 
   const addLineaMutation = useMutation({
-    mutationFn: (form: FormData) => {
-      const data: any = {
-        presupuestoId: presupuestoActivo.id,
-        tipo: tipoLinea,
-        descripcion: String(form.get('descripcion') ?? ''),
-        cantidad: Number(form.get('cantidad')),
-        descuento: Number(form.get('descuento') || 0),
-      };
-      if (tipoLinea === 'REFACCION') {
-        data.refaccionId = Number(form.get('refaccionId'));
-      } else {
-        data.descripcion = String(form.get('descripcion'));
-        data.precioUnitario = Number(form.get('precioUnitario'));
-      }
-      return addLineaPresupuesto(token!, data);
-    },
+    mutationFn: (data: any) => addLineaPresupuesto(token!, {
+      ...data,
+      presupuestoId: presupuestoActivo.id,
+      tipo: tipoLinea,
+    }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['presupuestos-orden', ordenId] });
+      toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Concepto agregado' });
     },
-    onError: (err: any) => alert(err.message),
+    onError: (err: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: err.message }),
   });
 
   const saveDiagnostico = async () => {
@@ -95,257 +99,251 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
         body: JSON.stringify({ diagnostico }),
       });
       qc.invalidateQueries({ queryKey: ['orden', ordenId] });
-      alert('Diagnóstico guardado');
+      toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Diagnóstico guardado' });
     } catch (e: any) {
-      alert(e.message);
+      toast.current?.show({ severity: 'error', summary: 'Error', detail: e.message });
     } finally {
       setSavingDiag(false);
     }
   };
 
-  const getEstadoColor = (estado: string) => {
+  const getEstadoSeverity = (estado: string) => {
     switch (estado) {
-      case 'completado': return 'bg-green-100 text-green-700 border-green-200';
-      case 'en_proceso': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'diagnostico': return 'bg-purple-100 text-purple-700 border-purple-200';
-      default: return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'completado':
+      case 'entregado': return 'success';
+      case 'en_proceso': return 'info';
+      case 'diagnostico': return 'warning';
+      default: return 'secondary';
     }
   };
 
   if (loadingOrden || !orden) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <ProgressBar mode="indeterminate" style={{ height: '6px', width: '300px' }} />
+        <span className="text-slate-500 font-medium">Cargando detalle de orden...</span>
       </div>
     );
   }
 
+  const refaccionOptions = refacciones?.results?.map((r: any) => ({
+    label: `[${r.sku}] ${r.nombre} — Stock: ${r.stock}`,
+    value: r.id
+  })) || [];
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <Toast ref={toast} />
+      
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/ordenes" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
-            <ArrowLeft className="w-5 h-5" />
+          <Link href="/ordenes">
+            <Button icon="pi pi-arrow-left" rounded text severity="secondary" className="border border-white/10 bg-white/5 hover:bg-slate-100" />
           </Link>
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
               {orden.folio}
+              <Tag value={orden.estado.toUpperCase().replace('_', ' ')} severity={getEstadoSeverity(orden.estado)} />
             </h2>
-            <p className="text-slate-500 text-sm mt-0.5">Vehículo: {orden.vehiculo_placas}</p>
+            <p className="text-slate-500 text-sm mt-1 font-medium">Vehículo: <span className="text-blue-600 font-bold">{orden.vehiculo_placas}</span></p>
           </div>
         </div>
-        <span className={`px-4 py-1.5 rounded-full text-sm font-semibold border ${getEstadoColor(orden.estado)}`}>
-          {orden.estado.toUpperCase().replace('_', ' ')}
-        </span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Columna izquierda: info + diagnóstico */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Queja del cliente */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2 mb-3">
+          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-3d relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-full translate-x-8 translate-y-[-8] opacity-70 group-hover:scale-150 transition-transform duration-500" />
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-6 relative z-10">
               <AlertCircle className="w-4 h-4 text-amber-500" /> Queja del Cliente
             </h3>
-            <p className="text-slate-600 text-sm leading-relaxed">{orden.queja_cliente || '—'}</p>
+            <p className="text-slate-700 text-lg leading-relaxed font-bold italic relative z-10">{orden.queja_cliente || '—'}</p>
           </div>
 
           {/* Hoja de Diagnóstico */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2 mb-3">
+          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-3d group">
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-6">
               <ClipboardList className="w-4 h-4 text-blue-500" /> Hoja de Diagnóstico
             </h3>
-            <textarea
+            <InputTextarea
               rows={5}
               defaultValue={orden.diagnostico ?? ''}
               onChange={(e) => setDiagnostico(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 resize-none"
+              className="w-full rounded-2xl border-slate-100 bg-slate-50/50 p-6 text-sm focus:bg-slate-100 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner font-medium"
               placeholder="Detalle el diagnóstico técnico del vehículo..."
             />
-            <button
+            <Button
+              label="Guardar Diagnóstico"
+              icon="pi pi-save"
               onClick={saveDiagnostico}
-              disabled={savingDiag}
-              className="mt-3 w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-            >
-              {savingDiag ? 'Guardando...' : 'Guardar Diagnóstico'}
-            </button>
+              loading={savingDiag}
+              className="mt-6 w-full rounded-2xl bg-slate-900 hover:bg-slate-800 border-none shadow-xl shadow-slate-900/20 font-black py-4 transition-all active:scale-95"
+            />
           </div>
 
           {/* Acción: Crear presupuesto */}
           {!presupuestoActivo && (
-            <div className="bg-white p-5 rounded-2xl border border-dashed border-slate-200 shadow-sm text-center">
-              <FileText className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-              <p className="text-sm text-slate-500 mb-4">Aún no hay presupuesto para esta orden.</p>
-              <button
+            <div className="bg-white/50 p-10 rounded-[3rem] border-2 border-dashed border-slate-200 text-center backdrop-blur-sm shadow-inner">
+              <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl text-slate-200">
+                <FileText className="w-10 h-10" />
+              </div>
+              <p className="text-slate-400 font-bold mb-8 uppercase tracking-widest text-xs">Sin presupuesto activo</p>
+              <Button
+                label="Crear Presupuesto"
+                icon="pi pi-plus"
                 onClick={() => crearPresupuestoMutation.mutate()}
-                disabled={crearPresupuestoMutation.isPending}
-                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 mx-auto"
-              >
-                <Plus className="w-4 h-4" />
-                {crearPresupuestoMutation.isPending ? 'Creando...' : 'Crear Presupuesto'}
-              </button>
+                loading={crearPresupuestoMutation.isPending}
+                className="rounded-2xl px-8 bg-blue-600 border-none shadow-3d shadow-blue-600/20 font-black py-4 transition-all active:scale-95"
+              />
             </div>
           )}
 
           {presupuestoActivo && (
-            <Link
-              href={`/presupuestos/${presupuestoActivo.id}`}
-              className="block bg-green-50 border border-green-200 p-4 rounded-2xl hover:bg-green-100 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <span className="text-sm font-semibold text-green-700">Presupuesto v{presupuestoActivo.version}</span>
+            <Link href={`/presupuestos/${presupuestoActivo.id}`}>
+              <div className="bg-gradient-to-br from-green-500 to-green-600 p-8 rounded-[2.5rem] hover:shadow-2xl hover:shadow-green-600/30 transition-all group cursor-pointer shadow-3d relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-x-12 translate-y-[-12] group-hover:scale-150 transition-transform duration-500" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                      <CheckCircle className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em]">Presupuesto Activo</span>
+                      <h4 className="text-xl font-black text-white">v{presupuestoActivo.version}</h4>
+                    </div>
+                  </div>
+                  <span className="text-3xl font-black text-white">${Number(presupuestoActivo.total).toLocaleString()}</span>
                 </div>
-                <span className="text-lg font-bold text-green-700">${Number(presupuestoActivo.total).toFixed(2)}</span>
+                <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between text-[10px] font-black text-white uppercase tracking-[0.2em] relative z-10">
+                  <span>Administrar Conceptos</span>
+                  <ArrowLeft className="w-4 h-4 rotate-180 group-hover:translate-x-1 transition-transform" />
+                </div>
               </div>
-              <p className="text-xs text-green-600 mt-1">Click para ver/editar y enviar al cliente →</p>
             </Link>
           )}
         </div>
 
         {/* Columna derecha: carga de refacciones y mano de obra */}
         {presupuestoActivo && (
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-8">
             {/* Form agregar concepto */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-              <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2 mb-5">
-                <Plus className="w-4 h-4 text-blue-500" /> Agregar Refacción o Mano de Obra
+            <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-3d">
+              <h3 className="text-2xl font-black text-slate-800 flex items-center gap-4 mb-8">
+                <div className="p-3 bg-blue-50 rounded-2xl text-blue-600 shadow-inner">
+                  <Plus className="w-6 h-6" />
+                </div>
+                Cargar Concepto
               </h3>
 
-              <div className="flex gap-2 mb-5 p-1 bg-slate-100 rounded-lg">
+              <div className="flex gap-3 mb-8 p-1.5 bg-slate-100 rounded-[2rem] border border-white/5">
                 <button
                   type="button"
                   onClick={() => setTipoLinea('REFACCION')}
-                  className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all flex justify-center items-center gap-2 ${tipoLinea === 'REFACCION' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`flex-1 py-4 text-[10px] font-black uppercase tracking-[0.2em] rounded-[1.5rem] transition-all flex justify-center items-center gap-3 ${tipoLinea === 'REFACCION' ? 'bg-white text-blue-600 shadow-xl ring-1 ring-blue-500/10' : 'text-slate-500 hover:text-slate-700'}`}
                 >
-                  <Package className="w-4 h-4" /> Refacción del Inventario
+                  <Package className="w-5 h-5" /> Refacción
                 </button>
                 <button
                   type="button"
                   onClick={() => setTipoLinea('SERVICIO')}
-                  className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all flex justify-center items-center gap-2 ${tipoLinea === 'SERVICIO' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`flex-1 py-4 text-[10px] font-black uppercase tracking-[0.2em] rounded-[1.5rem] transition-all flex justify-center items-center gap-3 ${tipoLinea === 'SERVICIO' ? 'bg-white text-blue-600 shadow-xl ring-1 ring-blue-500/10' : 'text-slate-500 hover:text-slate-700'}`}
                 >
-                  <Wrench className="w-4 h-4" /> Mano de Obra
+                  <Wrench className="w-5 h-5" /> Mano de Obra
                 </button>
               </div>
 
               <form
-                className="space-y-4"
+                className="grid grid-cols-1 gap-6"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  addLineaMutation.mutate(new FormData(e.currentTarget));
+                  const fd = new FormData(e.currentTarget);
+                  const data: any = {
+                    cantidad: Number(fd.get('cantidad')),
+                    descuento: Number(fd.get('descuento') || 0),
+                  };
+                  if (tipoLinea === 'REFACCION') {
+                    data.refaccionId = Number(fd.get('refaccionId'));
+                  } else {
+                    data.descripcion = String(fd.get('descripcion'));
+                    data.precioUnitario = Number(fd.get('precioUnitario'));
+                  }
+                  addLineaMutation.mutate(data);
                   (e.currentTarget as HTMLFormElement).reset();
                 }}
               >
                 {tipoLinea === 'REFACCION' ? (
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700">Pieza del Inventario *</label>
-                    <select name="refaccionId" required className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20 bg-white">
-                      <option value="">Seleccionar pieza…</option>
-                      {refacciones?.results?.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          [{r.sku}] {r.nombre} — Stock: {r.stock} | Costo: ${Number(r.costo).toFixed(2)}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-slate-400 mt-1">El costo se tomará automáticamente del inventario.</p>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Seleccionar Refacción del Inventario</label>
+                    <Dropdown name="refaccionId" options={refaccionOptions} required placeholder="Buscar pieza por SKU o nombre..." className="rounded-2xl border-slate-100 bg-slate-50/50 py-1" />
                   </div>
                 ) : (
-                  <>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-slate-700">Descripción del Servicio *</label>
-                      <input name="descripcion" required className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20" placeholder="Ej. Alineación y balanceo" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Descripción del Servicio</label>
+                      <InputText name="descripcion" required className="rounded-2xl border-slate-100 bg-slate-50/50 p-4 font-bold shadow-inner" placeholder="Ej. Alineación y balanceo" />
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-slate-700 flex items-center gap-1"><DollarSign className="w-3 h-3" /> Costo de Mano de Obra *</label>
-                      <input name="precioUnitario" type="number" step="0.01" min="0" required className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20" placeholder="350.00" />
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Precio de Mano de Obra</label>
+                      <InputText name="precioUnitario" type="number" step="0.01" min="0" required className="rounded-2xl border-slate-100 bg-slate-50/50 p-4 font-bold shadow-inner" placeholder="0.00" />
                     </div>
-                  </>
+                  </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700">Cantidad *</label>
-                    <input name="cantidad" type="number" min="1" step="0.01" defaultValue="1" required className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20" />
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Cantidad</label>
+                    <InputText name="cantidad" type="number" min="1" step="0.01" defaultValue="1" required className="rounded-2xl border-slate-100 bg-slate-50/50 p-4 font-bold shadow-inner" />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700">Descuento ($)</label>
-                    <input name="descuento" type="number" min="0" step="0.01" defaultValue="0" className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20" />
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Descuento Directo ($)</label>
+                    <InputText name="descuento" type="number" min="0" step="0.01" defaultValue="0" className="rounded-2xl border-slate-100 bg-slate-50/50 p-4 font-bold shadow-inner" />
                   </div>
                 </div>
 
-                <button
+                <Button
                   type="submit"
-                  disabled={addLineaMutation.isPending}
-                  className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  {addLineaMutation.isPending ? 'Agregando...' : 'Agregar al Presupuesto'}
-                </button>
+                  label={addLineaMutation.isPending ? 'Agregando...' : 'Vincular a Presupuesto'}
+                  icon={<Plus className="w-5 h-5 mr-2" />}
+                  loading={addLineaMutation.isPending}
+                  className="w-full py-5 rounded-2xl bg-blue-600 hover:bg-blue-700 border-none shadow-3d shadow-blue-600/20 font-black text-lg transition-all active:scale-95 mt-4"
+                />
               </form>
             </div>
 
             {/* Tabla de conceptos */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-                <h3 className="text-base font-semibold text-slate-900">Conceptos en Presupuesto</h3>
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <Clock className="w-4 h-4" />
-                  v{presupuestoActivo.version} — {presupuestoActivo.estado?.toUpperCase()}
-                </div>
+            <div className="bg-white rounded-[3rem] border border-slate-100 shadow-3d overflow-hidden">
+              <div className="p-10 border-b border-slate-50 flex items-center justify-between bg-gradient-to-r from-slate-50/50 to-transparent">
+                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">Conceptos Cargados</h3>
+                <Tag value={`VERSION ${presupuestoActivo.version}`} severity="info" className="px-5 py-2 rounded-xl font-black text-[10px] tracking-widest" />
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-100">
-                      <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Tipo</th>
-                      <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">Concepto</th>
-                      <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-center">Cant.</th>
-                      <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-right">P. Unit.</th>
-                      <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-right">Importe</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {presupuestoActivo.lineas?.map((l: any) => (
-                      <tr key={l.id} className="hover:bg-slate-50/50">
-                        <td className="px-5 py-3">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${l.tipo === 'refaccion' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>
-                            {l.tipo === 'refaccion' ? <Package className="w-3 h-3" /> : <Wrench className="w-3 h-3" />}
-                            {l.tipo === 'refaccion' ? 'Refacción' : 'Mano de Obra'}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3 text-sm text-slate-700">{l.descripcion || '—'}</td>
-                        <td className="px-5 py-3 text-sm text-slate-600 text-center">{Number(l.cantidad)}</td>
-                        <td className="px-5 py-3 text-sm text-slate-600 text-right">${Number(l.precio_unitario).toFixed(2)}</td>
-                        <td className="px-5 py-3 text-sm font-semibold text-slate-900 text-right">${Number(l.importe_neto).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                    {!presupuestoActivo.lineas?.length && (
-                      <tr>
-                        <td colSpan={5} className="px-5 py-8 text-center text-slate-400 text-sm">
-                          Sin conceptos aún. Agrega refacciones o mano de obra.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              
+              <DataTable value={presupuestoActivo.lineas} className="p-datatable-modern" emptyMessage="Aún no hay conceptos cargados.">
+                <Column header="Categoría" body={(l) => (
+                  <Tag severity={l.tipo === 'refaccion' ? 'info' : 'warning'} value={l.tipo === 'refaccion' ? 'Refacción' : 'Servicio'} className="px-3 py-1 font-black text-[9px] uppercase tracking-widest" rounded />
+                )} className="px-10 py-6" />
+                <Column field="descripcion" header="Descripción del Concepto" className="px-10 py-6 font-bold text-slate-700" />
+                <Column field="cantidad" header="Cant." className="text-center px-10 py-6 font-black" />
+                <Column header="Unitario" body={(l) => <span className="font-bold text-slate-500">${Number(l.precio_unitario).toFixed(2)}</span>} className="text-right px-10 py-6" />
+                <Column header="Importe Total" body={(l) => <span className="font-black text-slate-900 text-lg">${Number(l.importe_neto).toFixed(2)}</span>} className="text-right px-10 py-6" />
+              </DataTable>
+
               {/* Totales */}
-              <div className="bg-slate-50 p-5 border-t border-slate-100">
-                <div className="max-w-xs ml-auto space-y-2">
-                  <div className="flex justify-between text-sm text-slate-600">
-                    <span>Subtotal (sin IVA)</span>
-                    <span className="font-medium">${Number(presupuestoActivo.subtotal).toFixed(2)}</span>
+              <div className="bg-slate-900 p-12">
+                <div className="max-w-xs ml-auto space-y-4">
+                  <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                    <span>Subtotal</span>
+                    <span className="text-white">${Number(presupuestoActivo.subtotal).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-sm text-slate-600">
-                    <span>IVA 16%</span>
-                    <span className="font-medium">${Number(presupuestoActivo.iva).toFixed(2)}</span>
+                  <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                    <span>IVA (16%)</span>
+                    <span className="text-white">${Number(presupuestoActivo.iva).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-base font-bold text-slate-900 pt-2 border-t border-slate-200">
-                    <span>Total a Cobrar</span>
-                    <span className="text-blue-600">${Number(presupuestoActivo.total).toFixed(2)}</span>
+                  <div className="flex justify-between text-3xl font-black text-white pt-6 border-t border-white/10">
+                    <span className="tracking-tighter">TOTAL</span>
+                    <span className="text-blue-500">${Number(presupuestoActivo.total).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -354,10 +352,12 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
         )}
 
         {!presupuestoActivo && (
-          <div className="lg:col-span-2 bg-slate-50 rounded-2xl border border-dashed border-slate-200 flex flex-col items-center justify-center p-12 text-center">
-            <FileText className="w-12 h-12 text-slate-300 mb-4" />
-            <p className="text-slate-500 font-medium mb-2">Crea el presupuesto para agregar piezas y mano de obra</p>
-            <p className="text-slate-400 text-sm">Una vez creado el presupuesto podrás cargar refacciones del inventario y los servicios realizados.</p>
+          <div className="lg:col-span-2 bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center p-16 text-center shadow-inner">
+            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg mb-6">
+              <FileText className="w-10 h-10 text-slate-200" />
+            </div>
+            <h4 className="text-xl font-bold text-slate-800 mb-2">Presupuesto Requerido</h4>
+            <p className="text-slate-400 text-sm max-w-sm">Crea un presupuesto para comenzar a cargar refacciones del inventario y servicios de mano de obra a esta orden.</p>
           </div>
         )}
       </div>

@@ -1,202 +1,426 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createCliente, getClientes, updateCliente, deleteCliente } from '@/lib/api';
+import { createCliente, getClientes, updateCliente, deleteCliente, createVehiculo, getVehiculos, updateVehiculo, deleteVehiculo, getVehiculoHistorial } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, User, Mail, Phone, FileText, Car, Pencil, Trash2, Search } from 'lucide-react';
-import { Modal } from '@/components/Modal';
-import type { Cliente } from '@/lib/types';
+import { Plus, User, Users, Mail, Phone, Car, Search } from 'lucide-react';
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
+import { Dialog } from 'primereact/dialog';
+import { Button } from 'primereact/button';
+import { InputText } from 'primereact/inputtext';
+import { Toast } from 'primereact/toast';
+import { Tag } from 'primereact/tag';
+import { ProgressBar } from 'primereact/progressbar';
+import type { Cliente, Vehiculo } from '@/lib/types';
 
-const EMPTY: Partial<Cliente> = { nombre: '', email: '', telefono: '', rfc: '', direccion: '' };
-
-export default function ClientesPage() {
+export default function ClientesVehiculosPage() {
   const { token } = useAuth();
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ['clientes'], queryFn: () => getClientes(token!), enabled: Boolean(token) });
+  const toast = useRef<Toast>(null);
+  
+  // Queries
+  const { data: clientesData, isLoading: loadingClientes } = useQuery({ 
+    queryKey: ['clientes'], 
+    queryFn: () => getClientes(token!), 
+    enabled: Boolean(token) 
+  });
+  
+  const { data: vehiculosData } = useQuery({ 
+    queryKey: ['vehiculos'], 
+    queryFn: () => getVehiculos(token!), 
+    enabled: Boolean(token) 
+  });
 
+  // State
   const [search, setSearch] = useState('');
-  const [showCreate, setShowCreate] = useState(false);
-  const [editItem, setEditItem] = useState<Cliente | null>(null);
-  const [deleteItem, setDeleteItem] = useState<Cliente | null>(null);
-  const [incluirVehiculo, setIncluirVehiculo] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<any>(null);
+  const [showCreateCliente, setShowCreateCliente] = useState(false);
+  const [editCliente, setEditCliente] = useState<Cliente | null>(null);
+  const [deleteClienteItem, setDeleteClienteItem] = useState<Cliente | null>(null);
+  
+  const [showCreateVehiculo, setShowCreateVehiculo] = useState<number | null>(null);
+  const [editVehiculo, setEditVehiculo] = useState<Vehiculo | null>(null);
+  const [deleteVehiculoItem, setDeleteVehiculoItem] = useState<Vehiculo | null>(null);
+  
+  const [historyVehiculo, setHistoryVehiculo] = useState<Vehiculo | null>(null);
 
-  const createMutation = useMutation({
-    mutationFn: (form: FormData) => {
-      const data: any = {
-        nombre: String(form.get('nombre')),
-        email: String(form.get('email') ?? ''),
-        telefono: String(form.get('telefono') ?? ''),
-        rfc: String(form.get('rfc') ?? ''),
-        direccion: String(form.get('direccion') ?? ''),
-      };
-      if (incluirVehiculo) {
-        data.vehiculo = {
-          marca: String(form.get('marca') ?? ''),
-          modelo: String(form.get('modelo') ?? ''),
-          anio: parseInt(String(form.get('anio')) || '0', 10),
-          placas: String(form.get('placas') ?? ''),
-          color: String(form.get('color') ?? ''),
-        };
-      }
-      return createCliente(token!, data);
+  const { data: historial, isLoading: loadingHistorial } = useQuery({
+    queryKey: ['vehiculo-historial', historyVehiculo?.id],
+    queryFn: () => getVehiculoHistorial(token!, historyVehiculo!.id),
+    enabled: Boolean(token && historyVehiculo),
+  });
+
+  // Mutations
+  const createClienteMutation = useMutation({
+    mutationFn: (data: any) => createCliente(token!, data),
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['clientes'] }); 
+      setShowCreateCliente(false);
+      toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Cliente creado' });
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['clientes'] }); setShowCreate(false); setIncluirVehiculo(false); },
-    onError: (e: any) => alert(e.message),
+    onError: (e: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: e.message }),
   });
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, form }: { id: number; form: FormData }) =>
-      updateCliente(token!, id, {
-        nombre: String(form.get('nombre')),
-        email: String(form.get('email') ?? ''),
-        telefono: String(form.get('telefono') ?? ''),
-        rfc: String(form.get('rfc') ?? ''),
-        direccion: String(form.get('direccion') ?? ''),
-      }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['clientes'] }); setEditItem(null); },
-    onError: (e: any) => alert(e.message),
+  const updateClienteMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => updateCliente(token!, id, data),
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['clientes'] }); 
+      setEditCliente(null);
+      toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Cliente actualizado' });
+    },
+    onError: (e: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: e.message }),
   });
 
-  const deleteMutation = useMutation({
+  const deleteClienteMutation = useMutation({
     mutationFn: (id: number) => deleteCliente(token!, id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['clientes'] }); setDeleteItem(null); },
-    onError: (e: any) => alert(e.message),
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['clientes'] }); 
+      setDeleteClienteItem(null);
+      toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Cliente eliminado' });
+    },
+    onError: (e: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: e.message }),
   });
 
-  const filtered = (data?.results ?? []).filter(c =>
+  const createVehiculoMutation = useMutation({
+    mutationFn: (data: any) => createVehiculo(token!, data),
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['vehiculos'] }); 
+      setShowCreateVehiculo(null);
+      toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Vehículo agregado' });
+    },
+    onError: (e: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: e.message }),
+  });
+
+  const updateVehiculoMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => updateVehiculo(token!, id, data),
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['vehiculos'] }); 
+      setEditVehiculo(null);
+      toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Vehículo actualizado' });
+    },
+    onError: (e: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: e.message }),
+  });
+
+  const deleteVehiculoMutation = useMutation({
+    mutationFn: (id: number) => deleteVehiculo(token!, id),
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['vehiculos'] }); 
+      setDeleteVehiculoItem(null);
+      toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Vehículo eliminado' });
+    },
+    onError: (e: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: e.message }),
+  });
+
+  // Filtering
+  const filteredClientes = (clientesData?.results ?? []).filter(c =>
     c.nombre.toLowerCase().includes(search.toLowerCase()) ||
     (c.email ?? '').toLowerCase().includes(search.toLowerCase()) ||
     (c.telefono ?? '').includes(search)
   );
 
-  const inputCls = 'w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all';
+  const getVehiculosByCliente = (clienteId: number) => 
+    (vehiculosData?.results ?? []).filter(v => v.cliente === clienteId);
+
+  // Templates
+  const actionBodyTemplate = (rowData: Cliente) => (
+    <div className="flex gap-2 justify-center">
+      <Button icon="pi pi-pencil" rounded text severity="info" onClick={() => setEditCliente(rowData)} />
+      <Button icon="pi pi-trash" rounded text severity="danger" onClick={() => setDeleteClienteItem(rowData)} />
+    </div>
+  );
+
+  const rowExpansionTemplate = (data: Cliente) => {
+    const vels = getVehiculosByCliente(data.id);
+    return (
+      <div className="p-10 bg-slate-50/50 rounded-[3rem] m-6 border border-slate-100 shadow-inner">
+        <div className="flex items-center justify-between mb-8">
+          <h4 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-xl text-blue-600">
+              <Car className="w-5 h-5" />
+            </div>
+            Vehículos de {data.nombre}
+          </h4>
+          <Button 
+            label="Vincular Vehículo" 
+            icon={<Plus className="w-4 h-4 mr-2" />} 
+            onClick={() => {
+              setEditVehiculo(null);
+              setShowCreateVehiculo(data.id);
+            }}
+            className="p-button-outlined p-button-sm rounded-xl font-bold border-2"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {vels.map((v: any) => (
+            <div key={v.id} className="group bg-white p-6 rounded-[2rem] shadow-md hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border border-slate-100 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50 rounded-full translate-x-8 translate-y-[-8] group-hover:scale-150 transition-transform duration-500" />
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-mono font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-xl text-sm border border-blue-100">
+                    {v.placas}
+                  </span>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button icon="pi pi-pencil" rounded text severity="info" onClick={() => {
+                      setEditVehiculo(v);
+                      setShowCreateVehiculo(data.id);
+                    }} />
+                    <Button icon="pi pi-trash" rounded text severity="danger" onClick={() => setDeleteVehiculoItem(v)} />
+                  </div>
+                </div>
+                
+                <h5 className="text-xl font-black text-slate-900 mb-1">{v.marca} {v.modelo}</h5>
+                <div className="flex flex-col gap-1 text-sm text-slate-500 font-bold">
+                  <span className="flex items-center gap-2"><div className="w-1 h-1 bg-slate-300 rounded-full" /> Año: {v.anio || 'N/A'}</span>
+                  <span className="flex items-center gap-2"><div className="w-1 h-1 bg-slate-300 rounded-full" /> Color: {v.color || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+          {vels.length === 0 && (
+            <div className="col-span-full py-12 text-center bg-white/50 rounded-[2rem] border-2 border-dashed border-slate-200">
+              <Car className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+              <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">Este cliente no tiene vehículos registrados</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between">
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
+      <Toast ref={toast} />
+      
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Clientes</h2>
-          <p className="text-slate-500 mt-1">Gestiona los datos de tus clientes.</p>
+          <h2 className="text-4xl font-black text-slate-900 tracking-tighter flex items-center gap-4">
+            <div className="p-4 bg-gradient-3d rounded-2xl shadow-3d shadow-blue-600/30 ring-4 ring-white/10">
+              <Users className="w-8 h-8 text-white" />
+            </div>
+            Directorio de Clientes
+          </h2>
+          <p className="text-slate-500 mt-2 font-medium text-lg ml-1">Administración centralizada de propietarios y flota vehicular.</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm shadow-blue-600/20">
-          <Plus className="w-4 h-4" /> Nuevo Cliente
-        </button>
+        <Button 
+          label="Nuevo Cliente" 
+          icon={<Plus className="w-5 h-5 mr-2" />} 
+          onClick={() => setShowCreateCliente(true)} 
+          className="p-button-raised p-button-primary rounded-2xl shadow-3d shadow-blue-600/20 bg-blue-600 hover:bg-blue-700 border-none px-8 py-4 font-black transition-all active:scale-95" 
+        />
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, email o teléfono..." className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:outline-none" />
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-32"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-6 py-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">Nombre</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">Teléfono</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">RFC</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-slate-600 uppercase tracking-wider text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filtered.map(c => (
-                  <tr key={c.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="px-6 py-4 font-medium text-slate-900">{c.nombre}</td>
-                    <td className="px-6 py-4 text-slate-500 text-sm">{c.email || '—'}</td>
-                    <td className="px-6 py-4 text-slate-500 text-sm">{c.telefono || '—'}</td>
-                    <td className="px-6 py-4 text-slate-500 text-sm font-mono">{c.rfc || '—'}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex justify-center gap-2">
-                        <button onClick={() => setEditItem(c)} className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" title="Editar"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => setDeleteItem(c)} className="p-2 bg-red-50 text-red-500 hover:bg-red-100 rounded-lg transition-colors" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {!filtered.length && (
-                  <tr><td colSpan={5} className="px-6 py-10 text-center text-slate-400">No hay clientes{search ? ' que coincidan con la búsqueda' : ' registrados'}.</td></tr>
-                )}
-              </tbody>
-            </table>
+      <div className="card bg-white/80 backdrop-blur-xl rounded-[3rem] shadow-3d border border-slate-100 overflow-hidden transition-all hover:shadow-[0_30px_60px_rgba(0,0,0,0.1)]">
+        <div className="p-8 border-b border-slate-50 bg-gradient-to-r from-slate-50/50 to-transparent">
+          <div className="relative group max-w-2xl">
+            <Search className="w-6 h-6 absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+            <InputText 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+              placeholder="Buscar cliente por nombre, email o teléfono..." 
+              className="w-full pl-14 pr-6 py-5 rounded-[2rem] border-slate-100 bg-slate-50/30 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-bold shadow-inner"
+            />
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Modal: Crear */}
-      <Modal open={showCreate} title="Nuevo Cliente" onClose={() => { setShowCreate(false); setIncluirVehiculo(false); }}>
-        <form className="space-y-4" onSubmit={e => { e.preventDefault(); createMutation.mutate(new FormData(e.currentTarget)); }}>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2 space-y-1"><label className="text-xs font-medium text-slate-700 flex items-center gap-1"><User className="w-3 h-3" /> Nombre *</label><input name="nombre" required className={inputCls} placeholder="Juan Pérez" /></div>
-            <div className="space-y-1"><label className="text-xs font-medium text-slate-700 flex items-center gap-1"><Mail className="w-3 h-3" /> Email</label><input name="email" type="email" className={inputCls} placeholder="juan@mail.com" /></div>
-            <div className="space-y-1"><label className="text-xs font-medium text-slate-700 flex items-center gap-1"><Phone className="w-3 h-3" /> Teléfono</label><input name="telefono" className={inputCls} placeholder="555-1234" /></div>
-            <div className="space-y-1"><label className="text-xs font-medium text-slate-700 flex items-center gap-1"><FileText className="w-3 h-3" /> RFC</label><input name="rfc" className={inputCls} placeholder="XAXX010101" /></div>
-            <div className="space-y-1"><label className="text-xs font-medium text-slate-700">Dirección</label><input name="direccion" className={inputCls} placeholder="Calle 123" /></div>
-          </div>
-          <div className="border-t border-slate-100 pt-3">
-            <label className="flex items-center gap-2 cursor-pointer mb-3">
-              <input type="checkbox" checked={incluirVehiculo} onChange={e => setIncluirVehiculo(e.target.checked)} className="rounded border-slate-300" />
-              <span className="text-sm font-medium text-slate-700 flex items-center gap-1"><Car className="w-4 h-4 text-slate-400" /> Registrar vehículo ahora</span>
-            </label>
-            {incluirVehiculo && (
-              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 animate-in fade-in">
-                <div className="space-y-1"><label className="text-xs font-medium text-slate-700">Marca *</label><input name="marca" required={incluirVehiculo} className={inputCls} placeholder="Toyota" /></div>
-                <div className="space-y-1"><label className="text-xs font-medium text-slate-700">Modelo *</label><input name="modelo" required={incluirVehiculo} className={inputCls} placeholder="Corolla" /></div>
-                <div className="space-y-1"><label className="text-xs font-medium text-slate-700">Año *</label><input name="anio" type="number" required={incluirVehiculo} className={inputCls} placeholder="2020" /></div>
-                <div className="space-y-1"><label className="text-xs font-medium text-slate-700">Placas *</label><input name="placas" required={incluirVehiculo} className={inputCls} placeholder="ABC-123" /></div>
+        <DataTable 
+          value={filteredClientes} 
+          loading={loadingClientes}
+          expandedRows={expandedRows}
+          onRowToggle={(e) => setExpandedRows(e.data)}
+          rowExpansionTemplate={rowExpansionTemplate}
+          dataKey="id"
+          className="p-datatable-modern"
+          emptyMessage={
+            <div className="py-24 text-center flex flex-col items-center gap-4">
+              <div className="p-8 bg-slate-50 rounded-full">
+                <Users className="w-16 h-16 text-slate-200" />
               </div>
-            )}
+              <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-sm">No se encontraron clientes en el directorio</p>
+            </div>
+          }
+          rows={10}
+          paginator
+          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+          currentPageReportTemplate="{first} - {last} de {totalRecords}"
+          rowHover
+        >
+          <Column expander style={{ width: '4rem' }} className="px-6" />
+          <Column field="nombre" header="Nombre del Propietario" sortable body={(c) => (
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                <User className="w-5 h-5" />
+              </div>
+              <span className="font-black text-slate-800 text-lg tracking-tight">{c.nombre}</span>
+            </div>
+          )} className="px-6 py-6" />
+          <Column field="telefono" header="Contacto" body={(c) => (
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2 text-slate-600 font-bold">
+                <Phone className="w-3 h-3 text-slate-300" />
+                {c.telefono || <span className="text-slate-300 italic">Sin teléfono</span>}
+              </div>
+              <div className="flex items-center gap-2 text-slate-500 text-xs font-medium">
+                <Mail className="w-3 h-3 text-slate-300" />
+                {c.email || <span className="text-slate-300 italic">Sin correo</span>}
+              </div>
+            </div>
+          )} className="px-6 py-6" />
+          <Column header="Acciones" body={actionBodyTemplate} style={{ width: '10rem' }} className="px-6 py-6" />
+        </DataTable>
+      </div>
+
+      {/* Modals */}
+      <Dialog 
+        header={editCliente ? "Editar Cliente" : "Nuevo Cliente"} 
+        visible={showCreateCliente || !!editCliente} 
+        style={{ width: '450px' }} 
+        onHide={() => { setShowCreateCliente(false); setEditCliente(null); }}
+        className="rounded-[3rem] shadow-3d border border-slate-200 overflow-hidden"
+        headerClassName="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-8 border-b border-blue-800/30"
+        contentClassName="bg-gradient-to-b from-white to-slate-50/80 p-8"
+      >
+        <form className="grid grid-cols-1 gap-6 pt-2" onSubmit={(e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          const data = Object.fromEntries(fd);
+          if (editCliente) updateClienteMutation.mutate({ id: editCliente.id, data });
+          else createClienteMutation.mutate(data);
+        }}>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Nombre Completo *</label>
+            <InputText name="nombre" defaultValue={editCliente?.nombre} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-blue-500/20 transition-all py-4" />
           </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setShowCreate(false)} className="px-4 py-2 text-sm rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">Cancelar</button>
-            <button type="submit" disabled={createMutation.isPending} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl disabled:opacity-50 transition-colors">
-              {createMutation.isPending ? 'Guardando...' : 'Guardar Cliente'}
-            </button>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Teléfono</label>
+              <InputText name="telefono" defaultValue={editCliente?.telefono} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-blue-500/20 transition-all py-4" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Email</label>
+              <InputText name="email" defaultValue={editCliente?.email} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-blue-500/20 transition-all py-4" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">RFC</label>
+            <InputText name="rfc" defaultValue={editCliente?.rfc} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-blue-500/20 transition-all py-4" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Dirección</label>
+            <InputText name="direccion" defaultValue={editCliente?.direccion} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-blue-500/20 transition-all py-4" />
+          </div>
+          <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-slate-100">
+            <Button label="Cancelar" type="button" text className="font-bold rounded-2xl px-8 py-3 hover:bg-slate-100 transition-all" onClick={() => { setShowCreateCliente(false); setEditCliente(null); }} />
+            <Button label={editCliente ? "Actualizar" : "Guardar"} type="submit" loading={createClienteMutation.isPending || updateClienteMutation.isPending} className="font-black rounded-2xl px-10 py-3 shadow-3d shadow-blue-600/30 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-none transition-all active:scale-95" />
           </div>
         </form>
-      </Modal>
+      </Dialog>
 
-      {/* Modal: Editar */}
-      <Modal open={!!editItem} title="Editar Cliente" onClose={() => setEditItem(null)}>
-        {editItem && (
-          <form className="space-y-4" onSubmit={e => { e.preventDefault(); updateMutation.mutate({ id: editItem.id, form: new FormData(e.currentTarget) }); }}>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2 space-y-1"><label className="text-xs font-medium text-slate-700">Nombre *</label><input name="nombre" required defaultValue={editItem.nombre} className={inputCls} /></div>
-              <div className="space-y-1"><label className="text-xs font-medium text-slate-700">Email</label><input name="email" type="email" defaultValue={editItem.email} className={inputCls} /></div>
-              <div className="space-y-1"><label className="text-xs font-medium text-slate-700">Teléfono</label><input name="telefono" defaultValue={editItem.telefono} className={inputCls} /></div>
-              <div className="space-y-1"><label className="text-xs font-medium text-slate-700">RFC</label><input name="rfc" defaultValue={editItem.rfc} className={inputCls} /></div>
-              <div className="space-y-1"><label className="text-xs font-medium text-slate-700">Dirección</label><input name="direccion" defaultValue={editItem.direccion} className={inputCls} /></div>
+      <Dialog 
+        header={editVehiculo ? "Editar Vehículo" : "Nuevo Vehículo"} 
+        visible={showCreateVehiculo !== null || !!editVehiculo} 
+        style={{ width: '450px' }} 
+        onHide={() => { setShowCreateVehiculo(null); setEditVehiculo(null); }}
+        className="rounded-[3rem] shadow-3d border border-slate-200 overflow-hidden"
+        headerClassName="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-8 border-b border-emerald-800/30"
+        contentClassName="bg-gradient-to-b from-white to-slate-50/80 p-8"
+      >
+        <form className="grid grid-cols-1 gap-6 pt-2" onSubmit={(e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          const data = Object.fromEntries(fd);
+          if (editVehiculo) updateVehiculoMutation.mutate({ id: editVehiculo.id, data });
+          else createVehiculoMutation.mutate({ ...data, clienteId: showCreateVehiculo });
+        }}>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Marca *</label>
+              <InputText name="marca" defaultValue={editVehiculo?.marca} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
             </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={() => setEditItem(null)} className="px-4 py-2 text-sm rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">Cancelar</button>
-              <button type="submit" disabled={updateMutation.isPending} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl disabled:opacity-50 transition-colors">
-                {updateMutation.isPending ? 'Guardando...' : 'Actualizar'}
-              </button>
-            </div>
-          </form>
-        )}
-      </Modal>
-
-      {/* Modal: Confirmar Eliminación */}
-      <Modal open={!!deleteItem} title="Eliminar Cliente" onClose={() => setDeleteItem(null)}>
-        {deleteItem && (
-          <div className="space-y-5">
-            <p className="text-slate-600">¿Estás seguro de eliminar a <span className="font-semibold text-slate-900">{deleteItem.nombre}</span>? Esta acción no se puede deshacer.</p>
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setDeleteItem(null)} className="px-4 py-2 text-sm rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">Cancelar</button>
-              <button onClick={() => deleteMutation.mutate(deleteItem.id)} disabled={deleteMutation.isPending} className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl disabled:opacity-50 transition-colors">
-                {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar'}
-              </button>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Modelo *</label>
+              <InputText name="modelo" defaultValue={editVehiculo?.modelo} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
             </div>
           </div>
-        )}
-      </Modal>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Año *</label>
+              <InputText name="anio" type="number" defaultValue={editVehiculo?.anio?.toString()} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Placas *</label>
+              <InputText name="placas" defaultValue={editVehiculo?.placas} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4 uppercase" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Color</label>
+              <InputText name="color" defaultValue={editVehiculo?.color} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Kilometraje</label>
+              <InputText name="kilometrajeActual" type="number" defaultValue={editVehiculo?.kilometraje_actual?.toString()} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
+            </div>
+          </div>
+          <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-slate-100">
+            <Button label="Cancelar" type="button" text className="font-bold rounded-2xl px-8 py-3 hover:bg-slate-100 transition-all" onClick={() => { setShowCreateVehiculo(null); setEditVehiculo(null); }} />
+            <Button label={editVehiculo ? "Actualizar" : "Guardar"} type="submit" loading={createVehiculoMutation.isPending || updateVehiculoMutation.isPending} className="font-black rounded-2xl px-10 py-3 shadow-3d shadow-emerald-600/30 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 border-none transition-all active:scale-95" />
+          </div>
+        </form>
+      </Dialog>
+
+      {/* Historial Modal */}
+      <Dialog 
+        header={`Historial: ${historyVehiculo?.marca} ${historyVehiculo?.modelo}`} 
+        visible={!!historyVehiculo} 
+        style={{ width: '600px' }} 
+        onHide={() => setHistoryVehiculo(null)}
+      >
+        <div className="space-y-4 pt-4">
+          {loadingHistorial ? (
+            <ProgressBar mode="indeterminate" style={{ height: '6px' }} />
+          ) : !historial?.length ? (
+            <div className="text-center py-8 text-slate-400">Sin registros de reparaciones</div>
+          ) : (
+            <div className="space-y-4">
+              {historial.map((ot: any) => (
+                <div key={ot.id} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Tag value={ot.folio} severity="info" />
+                    <Tag value={ot.estado.toUpperCase()} severity={ot.estado === 'entregado' ? 'success' : 'warning'} />
+                  </div>
+                  <div className="text-xs font-bold text-slate-500">{new Date(ot.fecha_ingreso).toLocaleDateString()}</div>
+                  <div className="text-sm font-bold text-slate-800">{ot.queja_cliente}</div>
+                  <div className="text-sm text-slate-600 italic bg-white p-3 rounded-xl border border-slate-100">
+                    {ot.diagnostico || 'Pendiente de diagnóstico'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <Dialog 
+        header="Confirmar eliminación" 
+        visible={!!deleteClienteItem || !!deleteVehiculoItem} 
+        style={{ width: '350px' }} 
+        onHide={() => { setDeleteClienteItem(null); setDeleteVehiculoItem(null); }}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button label="No" text onClick={() => { setDeleteClienteItem(null); setDeleteVehiculoItem(null); }} />
+            <Button label="Sí, eliminar" severity="danger" onClick={() => {
+              if (deleteClienteItem) deleteClienteMutation.mutate(deleteClienteItem.id);
+              if (deleteVehiculoItem) deleteVehiculoMutation.mutate(deleteVehiculoItem.id);
+            }} />
+          </div>
+        }
+      >
+        <p className="text-sm text-slate-600">¿Estás seguro de que deseas eliminar este registro? Esta acción es irreversible.</p>
+      </Dialog>
     </div>
   );
 }

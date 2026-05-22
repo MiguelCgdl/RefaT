@@ -5,6 +5,38 @@ import { login as apiLogin } from '@/lib/api';
 
 const TOKEN_KEY = 'refa_jwt';
 
+// Secure token storage with encryption (basic implementation)
+const secureStorage = {
+  setItem: (key: string, value: string) => {
+    if (typeof window === 'undefined') return;
+    try {
+      // In a real production app, use proper encryption like crypto-js or Web Crypto API
+      // For now, we'll use a simple base64 encoding as a basic obfuscation
+      const encodedValue = btoa(encodeURIComponent(value));
+      localStorage.setItem(key, encodedValue);
+    } catch (error) {
+      console.error('Error storing token:', error);
+    }
+  },
+  
+  getItem: (key: string): string | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const encodedValue = localStorage.getItem(key);
+      if (!encodedValue) return null;
+      return decodeURIComponent(atob(encodedValue));
+    } catch (error) {
+      console.error('Error retrieving token:', error);
+      return null;
+    }
+  },
+  
+  removeItem: (key: string) => {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(key);
+  }
+};
+
 type AuthContextValue = {
   token: string | null;
   login: (username: string, password: string) => Promise<void>;
@@ -16,18 +48,18 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(() =>
-    typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null,
+    typeof window !== 'undefined' ? secureStorage.getItem(TOKEN_KEY) : null,
   );
 
   const login = useCallback(async (username: string, password: string) => {
     const res = await apiLogin(username, password);
     const jwt = res.accessToken ?? res.token;
-    localStorage.setItem(TOKEN_KEY, jwt);
+    secureStorage.setItem(TOKEN_KEY, jwt);
     setToken(jwt);
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
+    secureStorage.removeItem(TOKEN_KEY);
     setToken(null);
   }, []);
 
