@@ -1,1 +1,1 @@
-self.__NEXT_FONT_MANIFEST='{"pages":{},"app":{"/Users/juanmiguelcervantesbarocio/Documents/GitHub/RefaT/frontend-next/src/app/layout":["static/media/bb3ef058b751a6ad-s.p.woff2","static/media/7b0b24f36b1a6d0b-s.p.woff2"]},"appUsingSizeAdjust":true,"pagesUsingSizeAdjust":false}';
+self.__NEXT_FONT_MANIFEST="{\"pages\":{},\"app\":{\"/Users/Mike/Documents/GitHub/Refa/frontend-next/src/app/layout\":[\"static/media/bb3ef058b751a6ad-s.p.woff2\",\"static/media/7b0b24f36b1a6d0b-s.p.woff2\"]},\"appUsingSizeAdjust\":true,\"pagesUsingSizeAdjust\":false}"

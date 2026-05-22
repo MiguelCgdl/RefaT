@@ -7,8 +7,8 @@
   --bg-main: #0b0a0a;
   --bg-card: #131313;
   --bg-card-hover: #1c1b1b;
-  --border-color: #222222;
-  --border-color-hover: #2a2a2a;
+  --border-color: #333333;
+  --border-color-hover: #444444;
   --text-main: #c1c7d3;
   --text-white: #ffffff;
   --primary-blue: #1e73be;
@@ -49,7 +49,7 @@ body {
 
   /* Inputs, Textareas, Selects */
   input, textarea, select {
-    @apply bg-[#131313] border-[#222222] text-white placeholder-zinc-500 focus:border-[#1e73be] focus:ring-1 focus:ring-[#1e73be] transition-colors rounded-sm !important;
+    @apply bg-[#131313] border border-solid border-[#333333] text-white placeholder-zinc-500 focus:border-[#1e73be] focus:ring-1 focus:ring-[#1e73be] transition-colors rounded-sm !important;
   }
 
   /* Tables */
