@@ -1,7 +1,20 @@
 import type { Metadata } from 'next';
 import { Providers } from './providers';
 import { AppShell } from '@/components/AppShell';
+import { Outfit, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
+
+const sansFont = Outfit({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+});
+
+const monoFont = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Refa — Control vehicular',
@@ -10,8 +23,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
-      <body>
+    <html lang="es" className={`${sansFont.variable} ${monoFont.variable}`}>
+      <body className="font-sans antialiased bg-[#0b0a0a] text-[#c1c7d3]">
         <Providers>
           <AppShell>{children}</AppShell>
         </Providers>

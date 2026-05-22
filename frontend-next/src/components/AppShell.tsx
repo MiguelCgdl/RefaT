@@ -46,11 +46,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {/* Sidebar */}
-      <div className="w-64 bg-slate-900 text-slate-300 flex flex-col transition-all duration-300">
-        <div className="h-16 flex items-center px-6 border-b border-slate-800">
-          <h1 className="text-xl font-bold text-white tracking-wider flex items-center gap-2">
-            <Wrench className="w-6 h-6 text-blue-500" />
-            TALLER<span className="text-blue-500">PRO</span>
+      <div className="w-64 bg-slate-900 text-slate-300 flex flex-col transition-all duration-300 border-r border-slate-200">
+        <div className="h-16 flex items-center px-6 border-b border-slate-200">
+          <h1 className="text-lg font-bold text-white tracking-widest flex items-center gap-2 font-mono">
+            <Wrench className="w-5 h-5 text-blue-500" />
+            NORTH<span className="text-blue-500 font-extrabold">LUB</span>
           </h1>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-2">
@@ -62,17 +62,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                    ? 'bg-blue-600 text-white shadow-brand'
                     : 'hover:bg-slate-800 hover:text-white'
                 }`}
               >
                 <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                <span className="font-medium">{item.name}</span>
+                <span className="font-medium tracking-wide">{item.name}</span>
               </Link>
             );
           })}
         </nav>
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-slate-200">
           <button
             type="button"
             onClick={() => {
@@ -82,7 +82,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             className="flex w-full items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl transition-colors"
           >
             <LogOut className="w-5 h-5" />
-            <span className="font-medium">Cerrar Sesión</span>
+            <span className="font-medium tracking-wide">Cerrar Sesión</span>
           </button>
         </div>
       </div>

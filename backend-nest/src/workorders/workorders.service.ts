@@ -107,6 +107,12 @@ export class WorkordersService {
 
   async update(id: number, dto: UpdateOrdenDto) {
     await this.findOne(id);
+    
+    let fechaCierre: Date | undefined = dto.fechaCierre ? new Date(dto.fechaCierre) : undefined;
+    if ((dto.estado === 'LISTO' || dto.estado === 'ENTREGADO') && !fechaCierre) {
+      fechaCierre = new Date();
+    }
+
     const row = await this.prisma.ordenTrabajo.update({
       where: { id },
       data: {
@@ -115,7 +121,7 @@ export class WorkordersService {
         mecanicoId: dto.mecanicoId,
         prioridad: dto.prioridad,
         fechaEstimada: dto.fechaEstimada ? new Date(dto.fechaEstimada) : undefined,
-        fechaCierre: dto.fechaCierre ? new Date(dto.fechaCierre) : undefined,
+        fechaCierre: fechaCierre,
       },
       include: {
         vehiculo: { select: { placas: true } },

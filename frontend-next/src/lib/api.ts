@@ -44,6 +44,8 @@ export const updateVehiculo = (token: string, id: number, data: Record<string, u
   request<Vehiculo>(`/vehiculos/${id}`, { method: 'PATCH', body: JSON.stringify(data), token });
 export const deleteVehiculo = (token: string, id: number) =>
   request<void>(`/vehiculos/${id}`, { method: 'DELETE', token });
+export const getVehiculoHistorial = (token: string, id: number) =>
+  request<any[]>(`/vehiculos/${id}/historial`, { token });
 
 export const getOrdenes = (token: string) => request<PaginatedResponse<OrdenTrabajo>>('/ordenes/', { token });
 export const createOrden = (token: string, data: Record<string, unknown>) =>

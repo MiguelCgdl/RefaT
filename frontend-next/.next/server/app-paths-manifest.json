@@ -1,9 +1,13 @@
 {
-  "/dashboard/page": "app/dashboard/page.js",
-  "/ordenes/page": "app/ordenes/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/clientes/page": "app/clientes/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/login/page": "app/login/page.js",
+  "/ordenes/[id]/page": "app/ordenes/[id]/page.js",
+  "/ordenes/page": "app/ordenes/page.js",
+  "/page": "app/page.js",
+  "/presupuestos/[id]/page": "app/presupuestos/[id]/page.js",
+  "/presupuestos/page": "app/presupuestos/page.js",
   "/refacciones/page": "app/refacciones/page.js",
-  "/vehiculos/page": "app/vehiculos/page.js",
-  "/ordenes/[id]/page": "app/ordenes/[id]/page.js"
+  "/vehiculos/page": "app/vehiculos/page.js"
 }
