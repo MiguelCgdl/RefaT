@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createCliente, getClientes, updateCliente, deleteCliente, createVehiculo, getVehiculos, updateVehiculo, deleteVehiculo, getVehiculoHistorial } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,10 +9,81 @@ import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
+import { Dropdown } from 'primereact/dropdown';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
 import type { Cliente, Vehiculo } from '@/lib/types';
+
+const VEHICLE_CATALOG: Record<string, string[]> = {
+  Acura: ['ILX', 'Integra', 'MDX', 'NSX', 'RDX', 'RLX', 'TLX', 'ZDX'],
+  'Alfa Romeo': ['4C', 'Giulia', 'Giulietta', 'Mito', 'Stelvio', 'Tonale'],
+  Audi: ['A1', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'Q2', 'Q3', 'Q5', 'Q7', 'Q8', 'e-tron'],
+  BMW: ['Serie 1', 'Serie 2', 'Serie 3', 'Serie 4', 'Serie 5', 'Serie 7', 'X1', 'X3', 'X5', 'X6', 'i4', 'iX'],
+  Buick: ['Encore', 'Enclave', 'Envista', 'LaCrosse', 'Regal'],
+  Cadillac: ['ATS', 'CT4', 'CT5', 'CT6', 'Escalade', 'SRX', 'XT4', 'XT5', 'XT6'],
+  Chevrolet: ['Aveo', 'Beat', 'Blazer', 'Camaro', 'Captiva', 'Cavalier', 'Cheyenne', 'Colorado', 'Cruze', 'Equinox', 'Groove', 'Malibu', 'Onix', 'S10', 'Silverado', 'Spark', 'Suburban', 'Tahoe', 'Tornado', 'Tracker', 'Traverse'],
+  Chrysler: ['200', '300', 'Pacifica', 'PT Cruiser', 'Town & Country', 'Voyager'],
+  Cupra: ['Ateca', 'Born', 'Formentor', 'León'],
+  Dodge: ['Attitude', 'Challenger', 'Charger', 'Dart', 'Durango', 'Journey', 'Neon'],
+  Fiat: ['500', 'Argo', 'Cronos', 'Mobi', 'Palio', 'Pulse', 'Strada', 'Uno'],
+  Ford: ['Bronco', 'EcoSport', 'Edge', 'Escape', 'Expedition', 'F-150', 'Fiesta', 'Focus', 'Fusion', 'Lobo', 'Maverick', 'Mustang', 'Ranger', 'Territory'],
+  GMC: ['Acadia', 'Canyon', 'Sierra', 'Terrain', 'Yukon'],
+  Honda: ['Accord', 'BR-V', 'City', 'Civic', 'CR-V', 'Fit', 'HR-V', 'Odyssey', 'Pilot', 'WR-V'],
+  Hyundai: ['Accent', 'Creta', 'Elantra', 'Grand i10', 'HB20', 'Ioniq', 'Santa Fe', 'Sonata', 'Starex', 'Tucson', 'Venue'],
+  Infiniti: ['Q50', 'Q60', 'QX50', 'QX55', 'QX60', 'QX80'],
+  Isuzu: ['D-Max', 'ELF', 'MU-X'],
+  JAC: ['E Sei4', 'Frison', 'J4', 'J7', 'SEI2', 'SEI3', 'SEI4 Pro', 'SEI6 Pro', 'X200'],
+  Jeep: ['Cherokee', 'Compass', 'Gladiator', 'Grand Cherokee', 'Liberty', 'Patriot', 'Renegade', 'Wrangler'],
+  Kia: ['Carnival', 'Forte', 'K3', 'K4', 'Niro', 'Optima', 'Rio', 'Seltos', 'Sorento', 'Soul', 'Sportage', 'Stinger', 'Telluride'],
+  'Land Rover': ['Defender', 'Discovery', 'Discovery Sport', 'Range Rover', 'Range Rover Evoque', 'Range Rover Sport', 'Range Rover Velar'],
+  Lincoln: ['Aviator', 'Corsair', 'MKC', 'MKX', 'Nautilus', 'Navigator'],
+  Mazda: ['BT-50', 'CX-3', 'CX-30', 'CX-5', 'CX-50', 'CX-60', 'CX-9', 'CX-90', 'Mazda 2', 'Mazda 3', 'Mazda 6', 'MX-5'],
+  'Mercedes-Benz': ['Clase A', 'Clase C', 'Clase CLA', 'Clase E', 'Clase GLA', 'Clase GLB', 'Clase GLC', 'Clase GLE', 'Clase GLS', 'Clase S', 'Sprinter'],
+  MG: ['GT', 'HS', 'MG3', 'MG5', 'MG RX5', 'One', 'ZS'],
+  Mini: ['Clubman', 'Cooper', 'Countryman', 'John Cooper Works'],
+  Mitsubishi: ['ASX', 'Eclipse Cross', 'L200', 'Mirage', 'Montero', 'Outlander', 'Xpander'],
+  Nissan: ['Altima', 'Aprio', 'Frontier', 'Kicks', 'March', 'Maxima', 'Murano', 'NP300', 'Pathfinder', 'Rogue', 'Sentra', 'TIIDA', 'Urvan', 'Versa', 'V-Drive', 'X-Trail'],
+  Omoda: ['C5'],
+  Peugeot: ['2008', '208', '3008', '301', '308', '5008', 'Partner', 'Rifter'],
+  Porsche: ['911', 'Boxster', 'Cayenne', 'Cayman', 'Macan', 'Panamera', 'Taycan'],
+  RAM: ['700', '1200', '1500', '2500', '4000', 'ProMaster'],
+  Renault: ['Captur', 'Clio', 'Duster', 'Fluence', 'Kangoo', 'Koleos', 'Kwid', 'Logan', 'Oroch', 'Sandero', 'Stepway'],
+  SEAT: ['Arona', 'Ateca', 'Ibiza', 'León', 'Tarraco', 'Toledo'],
+  Subaru: ['BRZ', 'Crosstrek', 'Forester', 'Impreza', 'Legacy', 'Outback', 'WRX', 'XV'],
+  Suzuki: ['Across', 'Baleno', 'Celerio', 'Ertiga', 'Grand Vitara', 'Ignis', 'Jimny', 'S-Cross', 'Swift', 'Vitara'],
+  Tesla: ['Model 3', 'Model S', 'Model X', 'Model Y'],
+  Toyota: ['4Runner', 'Avanza', 'Camry', 'Corolla', 'Hilux', 'Hiace', 'Highlander', 'Land Cruiser', 'Prius', 'RAV4', 'Sequoia', 'Sienna', 'Tacoma', 'Tundra', 'Yaris'],
+  Volkswagen: ['Amarok', 'Bora', 'Caddy', 'Cross Sport', 'Gol', 'Golf', 'Jetta', 'Nivus', 'Passat', 'Polo', 'Saveiro', 'Taos', 'Teramont', 'T-Cross', 'Tiguan', 'Virtus', 'Vento'],
+  Volvo: ['C40', 'S60', 'S90', 'XC40', 'XC60', 'XC90'],
+};
+
+const AUTOMOTIVE_COLORS = [
+  'Blanco',
+  'Negro',
+  'Plata',
+  'Gris',
+  'Grafito',
+  'Azul',
+  'Rojo',
+  'Verde',
+  'Amarillo',
+  'Naranja',
+  'Café',
+  'Beige',
+  'Bronce',
+  'Arena',
+  'Champagne',
+  'Perla',
+  'Titanio',
+  'Vino',
+  'Morado',
+  'Turquesa',
+  'Otro',
+];
+
+const toOption = (value: string) => ({ label: value, value });
+const normalizeText = (value: string) => value.toUpperCase().slice(0, 13);
 
 export default function ClientesVehiculosPage() {
   const { token } = useAuth();
@@ -42,6 +113,10 @@ export default function ClientesVehiculosPage() {
   const [showCreateVehiculo, setShowCreateVehiculo] = useState<number | null>(null);
   const [editVehiculo, setEditVehiculo] = useState<Vehiculo | null>(null);
   const [deleteVehiculoItem, setDeleteVehiculoItem] = useState<Vehiculo | null>(null);
+  const [selectedMarca, setSelectedMarca] = useState('');
+  const [selectedModelo, setSelectedModelo] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
+  const [customColor, setCustomColor] = useState('');
   
   const [historyVehiculo, setHistoryVehiculo] = useState<Vehiculo | null>(null);
 
@@ -121,6 +196,41 @@ export default function ClientesVehiculosPage() {
 
   const getVehiculosByCliente = (clienteId: number) => 
     (vehiculosData?.results ?? []).filter(v => v.cliente === clienteId);
+
+  useEffect(() => {
+    if (editVehiculo) {
+      setSelectedMarca(editVehiculo.marca ?? '');
+      setSelectedModelo(editVehiculo.modelo ?? '');
+      const existingColor = editVehiculo.color ?? '';
+      const matchedColor = AUTOMOTIVE_COLORS.find(
+        (color) => color.toLowerCase() === existingColor.toLowerCase(),
+      );
+      setSelectedColor(matchedColor ?? (existingColor ? 'Otro' : ''));
+      setCustomColor(matchedColor ? '' : existingColor);
+      return;
+    }
+
+    if (showCreateVehiculo !== null) {
+      setSelectedMarca('');
+      setSelectedModelo('');
+      setSelectedColor('');
+      setCustomColor('');
+    }
+  }, [editVehiculo, showCreateVehiculo]);
+
+  const marcaOptions = Object.keys(VEHICLE_CATALOG).map(toOption);
+  const currentMarcaExists = editVehiculo?.marca && VEHICLE_CATALOG[editVehiculo.marca];
+  const mergedMarcaOptions = currentMarcaExists
+    ? marcaOptions
+    : editVehiculo?.marca
+      ? [...marcaOptions, toOption(editVehiculo.marca)]
+      : marcaOptions;
+
+  const modelOptionsBase = selectedMarca ? VEHICLE_CATALOG[selectedMarca] ?? [] : [];
+  const modelOptions = editVehiculo?.modelo && !modelOptionsBase.includes(editVehiculo.modelo)
+    ? [...modelOptionsBase, editVehiculo.modelo].map(toOption)
+    : modelOptionsBase.map(toOption);
+  const colorOptions = AUTOMOTIVE_COLORS.map(toOption);
 
   // Templates
   const actionBodyTemplate = (rowData: Cliente) => (
@@ -286,6 +396,9 @@ export default function ClientesVehiculosPage() {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
           const data = Object.fromEntries(fd);
+          if (typeof data.rfc === 'string') {
+            data.rfc = normalizeText(data.rfc);
+          }
           if (editCliente) updateClienteMutation.mutate({ id: editCliente.id, data });
           else createClienteMutation.mutate(data);
         }}>
@@ -305,7 +418,16 @@ export default function ClientesVehiculosPage() {
           </div>
           <div className="flex flex-col gap-2">
             <label className="text-xs font-black text-slate-600 uppercase tracking-widest">RFC</label>
-            <InputText name="rfc" defaultValue={editCliente?.rfc} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-blue-500/20 transition-all py-4" />
+            <InputText
+              name="rfc"
+              defaultValue={editCliente?.rfc}
+              maxLength={13}
+              className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-blue-500/20 transition-all py-4 uppercase"
+              onInput={(e) => {
+                const target = e.target as HTMLInputElement;
+                target.value = normalizeText(target.value);
+              }}
+            />
           </div>
           <div className="flex flex-col gap-2">
             <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Dirección</label>
@@ -330,18 +452,52 @@ export default function ClientesVehiculosPage() {
         <form className="grid grid-cols-1 gap-6 pt-2" onSubmit={(e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
-          const data = Object.fromEntries(fd);
+          const colorFinal = selectedColor === 'Otro' ? customColor.trim() : selectedColor;
+          const data = {
+            marca: selectedMarca,
+            modelo: selectedModelo,
+            anio: Number(fd.get('anio')),
+            placas: String(fd.get('placas') || '').toUpperCase(),
+            color: colorFinal,
+            kilometrajeActual: fd.get('kilometrajeActual') ? Number(fd.get('kilometrajeActual')) : '',
+          };
+
+          if (!data.marca || !data.modelo || !colorFinal) {
+            toast.current?.show({
+              severity: 'warn',
+              summary: 'Datos incompletos',
+              detail: 'Selecciona marca, modelo y color para registrar el vehículo.',
+            });
+            return;
+          }
+
           if (editVehiculo) updateVehiculoMutation.mutate({ id: editVehiculo.id, data });
           else createVehiculoMutation.mutate({ ...data, clienteId: showCreateVehiculo });
         }}>
           <div className="grid grid-cols-2 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Marca *</label>
-              <InputText name="marca" defaultValue={editVehiculo?.marca} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
+              <Dropdown
+                value={selectedMarca}
+                options={mergedMarcaOptions}
+                onChange={(e) => {
+                  setSelectedMarca(e.value);
+                  setSelectedModelo('');
+                }}
+                placeholder="Seleccionar marca..."
+                className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
+              />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Modelo *</label>
-              <InputText name="modelo" defaultValue={editVehiculo?.modelo} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
+              <Dropdown
+                value={selectedModelo}
+                options={modelOptions}
+                onChange={(e) => setSelectedModelo(e.value)}
+                placeholder={selectedMarca ? 'Seleccionar modelo...' : 'Primero selecciona una marca'}
+                disabled={!selectedMarca}
+                className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-6">
@@ -357,15 +513,37 @@ export default function ClientesVehiculosPage() {
           <div className="grid grid-cols-2 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Color</label>
-              <InputText name="color" defaultValue={editVehiculo?.color} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
+              <Dropdown
+                value={selectedColor}
+                options={colorOptions}
+                onChange={(e) => {
+                  setSelectedColor(e.value);
+                  if (e.value !== 'Otro') {
+                    setCustomColor('');
+                  }
+                }}
+                placeholder="Seleccionar color..."
+                className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
+              />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Kilometraje</label>
               <InputText name="kilometrajeActual" type="number" defaultValue={editVehiculo?.kilometraje_actual?.toString()} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
             </div>
           </div>
+          {selectedColor === 'Otro' && (
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Especificar Color *</label>
+              <InputText
+                value={customColor}
+                onChange={(e) => setCustomColor(e.target.value)}
+                className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4"
+                placeholder="Ej. Azul eléctrico tricapa"
+              />
+            </div>
+          )}
           <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-slate-100">
-            <Button label="Cancelar" type="button" text className="font-bold rounded-2xl px-8 py-3 hover:bg-slate-100 transition-all" onClick={() => { setShowCreateVehiculo(null); setEditVehiculo(null); }} />
+            <Button label="Cancelar" type="button" text className="font-bold rounded-2xl px-8 py-3 hover:bg-slate-100 transition-all" onClick={() => { setShowCreateVehiculo(null); setEditVehiculo(null); setSelectedMarca(''); setSelectedModelo(''); setSelectedColor(''); setCustomColor(''); }} />
             <Button label={editVehiculo ? "Actualizar" : "Guardar"} type="submit" loading={createVehiculoMutation.isPending || updateVehiculoMutation.isPending} className="font-black rounded-2xl px-10 py-3 shadow-3d shadow-emerald-600/30 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 border-none transition-all active:scale-95" />
           </div>
         </form>
