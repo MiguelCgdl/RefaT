@@ -118,18 +118,36 @@ export class QuotesService {
 
   async createLinea(dto: CreateLineaDto) {
     let precio = dto.precioUnitario;
-    if (dto.tipo === TipoLineaPresupuesto.REFACCION && dto.refaccionId && precio == null) {
+    let descripcion = dto.descripcion;
+
+    if (dto.tipo === TipoLineaPresupuesto.REFACCION) {
+      if (!dto.refaccionId) {
+        throw new BadRequestException({ detalle: 'refaccionId requerido para lineas de refaccion.' });
+      }
+
       const ref = await this.prisma.refaccion.findUnique({ where: { id: dto.refaccionId } });
       if (!ref) throw new NotFoundException('Refacción no encontrada');
-      precio = Number(ref.precioVenta);
+
+      if (precio == null) {
+        precio = Number(ref.precioVenta);
+      }
+
+      if (!descripcion?.trim()) {
+        descripcion = `[${ref.sku}] ${ref.nombre}`;
+      }
     }
+
+    if (dto.tipo === TipoLineaPresupuesto.SERVICIO && !dto.descripcion?.trim()) {
+      throw new BadRequestException({ detalle: 'descripcion requerida para lineas de servicio.' });
+    }
+
     if (precio == null) throw new BadRequestException('precioUnitario requerido');
 
     await this.prisma.lineaPresupuesto.create({
       data: {
         presupuestoId: dto.presupuestoId,
         tipo: dto.tipo,
-        descripcion: dto.descripcion,
+        descripcion: descripcion!,
         refaccionId: dto.refaccionId,
         cantidad: dto.cantidad,
         precioUnitario: precio,

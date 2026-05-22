@@ -19,6 +19,7 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
   const { token } = useAuth();
   const qc = useQueryClient();
   const toast = useRef<Toast>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const id = parseInt(params.id, 10);
 
   const { data: presupuesto, isLoading } = useQuery({
@@ -34,6 +35,7 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
   });
 
   const [tipoLinea, setTipoLinea] = useState<'SERVICIO' | 'REFACCION'>('REFACCION');
+  const [selectedRefaccionId, setSelectedRefaccionId] = useState<number | null>(null);
 
   const addLineaMutation = useMutation({
     mutationFn: (data: any) => addLineaPresupuesto(token!, {
@@ -43,6 +45,8 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['presupuesto', id] });
+      setSelectedRefaccionId(null);
+      formRef.current?.reset();
       toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Concepto agregado' });
     },
     onError: (err: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: err.message }),
@@ -111,7 +115,10 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
               </button>
               <button
                 type="button"
-                onClick={() => setTipoLinea('SERVICIO')}
+                onClick={() => {
+                  setTipoLinea('SERVICIO');
+                  setSelectedRefaccionId(null);
+                }}
                 className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex justify-center items-center gap-2 ${tipoLinea === 'SERVICIO' ? 'bg-white text-blue-600 shadow-lg shadow-blue-600/10 ring-1 ring-blue-500/10' : 'text-slate-500 hover:text-slate-700'}`}
               >
                 <Wrench className="w-4 h-4" /> Mano de Obra
@@ -119,6 +126,7 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
             </div>
 
             <form
+              ref={formRef}
               className="grid grid-cols-1 gap-4"
               onSubmit={(e) => {
                 e.preventDefault();
@@ -128,19 +136,34 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
                   descuento: Number(fd.get('descuento') || 0),
                 };
                 if (tipoLinea === 'REFACCION') {
-                  data.refaccionId = Number(fd.get('refaccionId'));
+                  if (!selectedRefaccionId) {
+                    toast.current?.show({
+                      severity: 'warn',
+                      summary: 'Selecciona una refacción',
+                      detail: 'Debes elegir una pieza del catálogo antes de agregarla.',
+                    });
+                    return;
+                  }
+                  data.refaccionId = selectedRefaccionId;
                 } else {
                   data.descripcion = String(fd.get('descripcion'));
                   data.precioUnitario = Number(fd.get('precioUnitario'));
                 }
                 addLineaMutation.mutate(data);
-                (e.currentTarget as HTMLFormElement).reset();
               }}
             >
               {tipoLinea === 'REFACCION' ? (
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Refacción del Inventario *</label>
-                  <Dropdown name="refaccionId" options={refaccionOptions} required placeholder="Seleccionar pieza…" className="rounded-xl border-slate-200" />
+                  <Dropdown
+                    value={selectedRefaccionId}
+                    options={refaccionOptions}
+                    onChange={(e) => setSelectedRefaccionId(e.value)}
+                    placeholder="Seleccionar pieza…"
+                    filter
+                    showClear
+                    className="rounded-xl border-slate-200"
+                  />
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4">

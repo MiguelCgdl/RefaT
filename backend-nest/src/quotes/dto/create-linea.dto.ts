@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsEnum, IsInt, IsNumber, IsOptional, IsString, MaxLength, ValidateIf } from 'class-validator';
 import { TipoLineaPresupuesto } from '@prisma/client';
 
 export class CreateLineaDto {
@@ -8,10 +8,12 @@ export class CreateLineaDto {
   @IsEnum(TipoLineaPresupuesto)
   tipo!: TipoLineaPresupuesto;
 
+  @ValidateIf((o) => o.tipo === TipoLineaPresupuesto.SERVICIO)
   @IsString()
   @MaxLength(300)
-  descripcion!: string;
+  descripcion?: string;
 
+  @ValidateIf((o) => o.tipo === TipoLineaPresupuesto.REFACCION)
   @IsOptional()
   @IsInt()
   refaccionId?: number;
@@ -19,6 +21,7 @@ export class CreateLineaDto {
   @IsNumber()
   cantidad!: number;
 
+  @ValidateIf((o) => o.tipo === TipoLineaPresupuesto.SERVICIO)
   @IsOptional()
   @IsNumber()
   precioUnitario?: number;

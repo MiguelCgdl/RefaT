@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createOrden, deleteOrden, getOrdenes, getVehiculos, updateOrden } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -53,6 +53,16 @@ export default function OrdenesPage({ hideHeader = false }: { hideHeader?: boole
   const [showCreate, setShowCreate] = useState(false);
   const [editItem, setEditItem] = useState<OrdenTrabajo | null>(null);
   const [deleteItem, setDeleteItem] = useState<OrdenTrabajo | null>(null);
+  const [editVehiculoId, setEditVehiculoId] = useState<number | null>(null);
+  const [editEstado, setEditEstado] = useState<string>('');
+  const [editPrioridad, setEditPrioridad] = useState<string>('');
+
+  useEffect(() => {
+    if (!editItem) return;
+    setEditVehiculoId(editItem.vehiculo);
+    setEditEstado(String(editItem.estado || '').toUpperCase());
+    setEditPrioridad(String(editItem.prioridad || '').toUpperCase());
+  }, [editItem]);
 
   const createMutation = useMutation({
     mutationFn: (data: any) => createOrden(token!, data),
@@ -248,7 +258,12 @@ export default function OrdenesPage({ hideHeader = false }: { hideHeader?: boole
         header="Editar Orden de Trabajo" 
         visible={!!editItem} 
         style={{ width: '500px' }} 
-        onHide={() => setEditItem(null)}
+        onHide={() => {
+          setEditItem(null);
+          setEditVehiculoId(null);
+          setEditEstado('');
+          setEditPrioridad('');
+        }}
         className="rounded-3xl"
       >
         {editItem && (
@@ -258,26 +273,43 @@ export default function OrdenesPage({ hideHeader = false }: { hideHeader?: boole
             updateMutation.mutate({
               id: editItem.id,
               data: {
-                vehiculoId: Number(fd.get('vehiculoId')),
+                vehiculoId: editVehiculoId,
                 quejaCliente: String(fd.get('quejaCliente')),
-                estado: String(fd.get('estado')),
-                prioridad: String(fd.get('prioridad')),
+                estado: editEstado,
+                prioridad: editPrioridad,
                 diagnostico: String(fd.get('diagnostico') || ''),
               }
             });
           }}>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold text-slate-500 uppercase">Vehículo *</label>
-              <Dropdown name="vehiculoId" value={editItem.vehiculo} options={vehicleOptions} placeholder="Seleccionar vehículo…" required className="rounded-xl" />
+              <Dropdown
+                value={editVehiculoId}
+                options={vehicleOptions}
+                onChange={(e) => setEditVehiculoId(e.value)}
+                placeholder="Seleccionar vehículo…"
+                required
+                className="rounded-xl"
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Estado</label>
-                <Dropdown name="estado" value={editItem.estado} options={STATUS} className="rounded-xl" />
+                <Dropdown
+                  value={editEstado}
+                  options={STATUS}
+                  onChange={(e) => setEditEstado(e.value)}
+                  className="rounded-xl"
+                />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Prioridad</label>
-                <Dropdown name="prioridad" value={editItem.prioridad} options={PRIORIDADES} className="rounded-xl" />
+                <Dropdown
+                  value={editPrioridad}
+                  options={PRIORIDADES}
+                  onChange={(e) => setEditPrioridad(e.value)}
+                  className="rounded-xl"
+                />
               </div>
             </div>
             <div className="flex flex-col gap-1">
