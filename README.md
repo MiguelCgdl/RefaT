@@ -1,151 +1,324 @@
-# Refa — Control vehicular (taller + refaccionaria)
+# Refa
 
-Sistema para gestionar clientes, vehículos, órdenes de trabajo, presupuestos, refacciones e inventario.
+Sistema de gestión para taller mecánico, clientes, vehículos, órdenes de trabajo, presupuestos y almacén de refacciones.
 
-## Arquitectura (stack premium)
+## Resumen
 
+Refa es un monorepo con una arquitectura moderna orientada a operación interna de taller:
+
+- Frontend en `Next.js 14` con `App Router`
+- Backend en `NestJS` con `Prisma`
+- Base de datos `PostgreSQL`
+- `Redis` para colas y procesos auxiliares
+- Autenticación con `JWT`
+
+Actualmente la interfaz principal organiza el sistema en cuatro áreas:
+
+- `Dashboard`
+- `Clientes y Vehículos`
+- `Taller`
+- `Almacén`
+
+## Arquitectura
+
+```text
+┌──────────────────────┐      HTTP /api      ┌─────────────────────────┐
+│ frontend-next/       │ <-----------------> │ backend-nest/           │
+│ Next.js 14 + TS      │    JWT Bearer       │ NestJS + Prisma + TS    │
+└──────────────────────┘                     └──────────┬──────────────┘
+                                                        │
+                                      ┌─────────────────┴─────────────────┐
+                                      │                                   │
+                                      ▼                                   ▼
+                                PostgreSQL                              Redis
 ```
-┌──────────────────┐     REST /api      ┌─────────────────────────┐
-│  Next.js (App)   │ ◄────────────────► │  NestJS + Prisma        │
-│  frontend-next/  │     JWT Bearer     │  backend-nest/          │
-└──────────────────┘                    └───────────┬─────────────┘
-                                                    │
-                         ┌──────────────────────────┼──────────────────┐
-                         ▼                          ▼                  ▼
-                   PostgreSQL                    Redis            BullMQ (stubs)
-```
+
+## Stack
 
 | Capa | Tecnología |
-|------|------------|
-| Frontend | React + **Next.js 14** (App Router), TypeScript |
-| Backend | **NestJS** + TypeScript, módulos por dominio |
-| DB | **PostgreSQL** + **Prisma** ORM |
-| Auth | **JWT** + Passport (roles: admin, mecanico, recepcion, almacen, cliente) |
-| Cola | **BullMQ** + Redis (recordatorios, alertas stock — processors stub) |
-| Reportes | **PDFKit** + **ExcelJS** (PDF presupuesto, Excel refacciones) |
-| Notificaciones | Stubs Twilio / SendGrid / WhatsApp (solo env) |
-| Infra | **Docker Compose**: postgres, redis, api, frontend, nginx opcional |
+|---|---|
+| Frontend | `Next.js 14`, `React 18`, `TypeScript`, `Tailwind`, `PrimeReact`, `React Query` |
+| Backend | `NestJS`, `TypeScript`, `Prisma`, `Passport JWT` |
+| Base de datos | `PostgreSQL` |
+| Cola / mensajería | `Redis`, `BullMQ` |
+| Reportes | `PDFKit`, `ExcelJS`, `xlsx` |
+| Infra | `Docker Compose`, `Nginx` opcional |
 
-### Legacy (deprecado)
+## Módulos funcionales
 
-- `backend/` — Django + DRF (ver [backend/DEPRECATED.md](backend/DEPRECATED.md))
-- `frontend/` — Vite + React
+### Dashboard
 
-## Requisitos
+- Vista ejecutiva con métricas operativas
+- Resumen de órdenes activas
+- Conteo de refacciones con bajo stock
+- Accesos rápidos a los módulos principales
 
-- Node.js 20+
-- Docker Desktop (recomendado para PostgreSQL y Redis)
-- PowerShell o bash
+### Clientes y Vehículos
 
-## Inicio rápido con Docker
+- Alta, edición y eliminación de clientes
+- Asociación de vehículos por cliente
+- Historial de órdenes por vehículo
+- Validaciones en captura, incluyendo:
+  - `RFC` en mayúsculas y con máximo `13` caracteres
+  - Selección guiada de marca, modelo y color del vehículo
 
-```powershell
-# 1. Variables de entorno
-Copy-Item .env.example .env
+### Taller
 
-# 2. Levantar postgres, redis, API y frontend
-docker compose up --build -d
+Concentra la operación del taller en una sola sección:
 
-# 3. (Opcional) Proxy nginx en puerto 80
-docker compose --profile with-nginx up -d nginx
-```
+- `Órdenes de trabajo`
+- `Presupuestos`
+- Pantallas de detalle para diagnóstico y conceptos
 
-- Frontend: http://localhost:3000  
-- API: http://localhost:3001/api  
-- Login por defecto (seed): **admin** / **admin**
+### Almacén
 
-## Desarrollo local (sin Docker para Node)
+- Gestión de refacciones e inventario
+- Altas, ediciones y bajas
+- Importación y exportación
+- Control visual de stock bajo
 
-```powershell
-# 1. Solo infraestructura
-docker compose up -d postgres redis
+## Flujo principal del sistema
 
-# 2. Copiar env y ajustar DATABASE_URL / REDIS_URL
-Copy-Item .env.example .env
-
-# 3. Instalar dependencias
-npm run install:all
-
-# 4. Base de datos
-cd backend-nest
-npx prisma db push
-npx prisma db seed
-cd ..
-
-# 5. API + frontend en paralelo
-npm run dev
-```
-
-## Scripts raíz
-
-| Script | Descripción |
-|--------|-------------|
-| `npm run install:all` | Instala backend-nest y frontend-next |
-| `npm run dev` | Nest watch + Next dev (concurrently) |
-| `npm run build` | Build producción de ambos |
-| `npm run docker:up` | `docker compose up --build -d` |
-| `npm run prisma:push` | Sincroniza schema Prisma |
-| `npm run prisma:seed` | Usuario admin/admin |
-
-## Endpoints principales (`/api`)
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST | `/auth/login` o `/auth/token` | JWT (compat. nombre legacy) |
-| GET/POST | `/clientes` | CRUD clientes |
-| GET/POST/PATCH | `/vehiculos` | CRUD vehículos |
-| GET | `/vehiculos/:id/historial` | Historial OT del vehículo |
-| GET/POST/PATCH | `/ordenes` | Órdenes (folio `OT-YYYYMMDD-NNNN`) |
-| GET/POST | `/presupuestos` | Presupuestos |
-| POST | `/presupuestos/:id/aprobar` | Aprueba y descuenta stock (transacción) |
-| POST | `/lineas-presupuesto` | Líneas de presupuesto |
-| GET/POST | `/refacciones` | Refacciones |
-| GET/POST | `/movimientos-inventario` | Movimientos |
-| GET | `/reportes/resumen` | Dashboard |
-| GET | `/reportes/presupuestos/:id/pdf` | PDF presupuesto |
-| GET | `/reportes/refacciones/excel` | Export Excel |
-| GET | `/notificaciones/health` | Estado stubs notificaciones |
-| POST | `/cola/recordatorio` | Encolar recordatorio (stub) |
-| POST | `/cola/stock-alert` | Encolar alerta stock (stub) |
-
-Autenticación: cabecera `Authorization: Bearer <token>`.
-
-## Seguridad
-
-- **helmet** en NestJS
-- **@nestjs/throttler** (120 req/min por IP)
-- **CORS** configurable (`CORS_ORIGIN`)
-- En producción: terminar TLS en nginx/ingress, rotar `JWT_SECRET`, no commitear `.env`
-
-## Dashboard analítico (futuro)
-
-Documentado para despliegue opcional:
-
-- **Grafana** — métricas de API/Redis/Postgres vía Prometheus
-- **Metabase** — BI sobre PostgreSQL (conexión read-only)
-
-No se incluye manifiesto K8s completo; path sugerido: Helm chart con postgres/redis externos y secrets en vault.
+1. Registrar cliente
+2. Vincular uno o más vehículos
+3. Crear orden de trabajo
+4. Capturar diagnóstico técnico
+5. Crear presupuesto
+6. Agregar refacciones y mano de obra
+7. Enviar o aprobar presupuesto
+8. Descontar inventario cuando aplique
 
 ## Estructura del repositorio
 
-```
+```text
 Refa/
-├── backend-nest/      # API NestJS + Prisma
-├── frontend-next/     # UI Next.js
+├── backend-nest/      # Backend principal en NestJS + Prisma
+├── frontend-next/     # Frontend principal en Next.js
 ├── nginx/             # Proxy opcional
-├── backend/           # LEGACY Django
-├── frontend/          # LEGACY Vite
+├── backend/           # Backend legacy en Django
+├── frontend/          # Frontend legacy en Vite
 ├── docker-compose.yml
 ├── .env.example
+├── FUNCIONALIDADES.md
 └── package.json
 ```
 
-## Roles
+## Estado actual del repositorio
 
-| Rol Prisma | Uso |
-|------------|-----|
-| ADMIN | Acceso completo |
-| RECEPCION | Alta clientes, vehículos, órdenes |
-| MECANICO | Actualización OT |
-| ALMACEN | Inventario y cola stock |
-| CLIENTE | Reservado (portal futuro) |
+### Activo
+
+- `backend-nest/`
+- `frontend-next/`
+- `docker-compose.yml`
+- `nginx/`
+
+### Legacy
+
+- `backend/` (`Django + DRF`)
+- `frontend/` (`React + Vite`)
+
+Referencia: [backend/DEPRECATED.md](backend/DEPRECATED.md)
+
+## Requisitos
+
+- `Node.js 20+`
+- `npm`
+- `Docker` y `Docker Compose` recomendados
+- `PostgreSQL` y `Redis` si se ejecuta sin Docker
+
+## Variables de entorno
+
+El proyecto usa variables de entorno centralizadas en la raíz.
+
+1. Copia el archivo base:
+
+```bash
+cp .env.example .env
+```
+
+2. Ajusta al menos:
+
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `NEXT_PUBLIC_API_URL`
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `CORS_ORIGIN`
+
+El archivo base disponible es [`.env.example`](.env.example).
+
+## Ejecución con Docker
+
+Levanta todo el stack principal:
+
+```bash
+docker compose up --build -d
+```
+
+Servicios esperados:
+
+- Frontend: `http://localhost:3000`
+- API: `http://localhost:3001/api`
+- Swagger: `http://localhost:3001/api/docs`
+- Health check: `http://localhost:3001/api/health`
+
+Si quieres exponer Nginx:
+
+```bash
+docker compose --profile with-nginx up -d nginx
+```
+
+## Desarrollo local
+
+### 1. Infraestructura
+
+```bash
+docker compose up -d postgres redis
+```
+
+### 2. Instalar dependencias
+
+```bash
+npm run install:all
+```
+
+### 3. Preparar base de datos
+
+```bash
+cd backend-nest
+npm run prisma:generate
+npm run prisma:push
+npm run prisma:seed
+cd ..
+```
+
+### 4. Ejecutar frontend y backend
+
+```bash
+npm run dev
+```
+
+## Scripts útiles
+
+### Raíz
+
+| Script | Descripción |
+|---|---|
+| `npm run install:all` | Instala dependencias de `backend-nest` y `frontend-next` |
+| `npm run dev` | Ejecuta API y frontend en paralelo |
+| `npm run build` | Construye backend y frontend |
+| `npm run docker:up` | Levanta el stack con Docker |
+| `npm run docker:down` | Baja el stack Docker |
+| `npm run prisma:generate` | Genera cliente Prisma |
+| `npm run prisma:push` | Sincroniza esquema Prisma |
+| `npm run prisma:seed` | Ejecuta seed del backend |
+
+### Backend
+
+Archivo: [`backend-nest/package.json`](backend-nest/package.json)
+
+- `npm run start:dev`
+- `npm run build`
+- `npm run prisma:generate`
+- `npm run prisma:push`
+- `npm run prisma:seed`
+
+### Frontend
+
+Archivo: [`frontend-next/package.json`](frontend-next/package.json)
+
+- `npm run dev`
+- `npm run build`
+- `npm run start`
+
+## API principal
+
+La API expone prefijo global `api`.
+
+### Autenticación
+
+- `POST /api/auth/login`
+- `POST /api/auth/token`
+
+### Salud y documentación
+
+- `GET /api/health`
+- `GET /api/docs`
+
+### Recursos principales
+
+- `GET/POST/PATCH/DELETE /api/clientes`
+- `GET/POST/PATCH/DELETE /api/vehiculos`
+- `GET /api/vehiculos/:id/historial`
+- `GET/POST/PATCH/DELETE /api/ordenes`
+- `GET/POST/PATCH/DELETE /api/presupuestos`
+- `POST /api/lineas-presupuesto`
+- `GET/POST/PATCH/DELETE /api/refacciones`
+- `GET/POST /api/movimientos-inventario`
+- `GET /api/reportes/resumen`
+
+Autenticación por cabecera:
+
+```text
+Authorization: Bearer <token>
+```
+
+## Seguridad
+
+El backend y frontend ya contemplan medidas base de seguridad:
+
+- `helmet` en NestJS
+- `ValidationPipe` global con `whitelist`, `transform` y `forbidNonWhitelisted`
+- `@nestjs/throttler` con límite global
+- `CORS` configurable por entorno
+- `Swagger` protegido por JWT en endpoints autenticados
+- Comportamiento fail-fast ante error de conexión a base de datos
+- Endpoint de salud para verificación operativa
+- Uso de variables de entorno para datos sensibles
+- Headers de seguridad en el frontend Next.js
+
+## UI actual
+
+La interfaz principal usa un lenguaje visual oscuro premium y navegación lateral centralizada.
+
+Rutas funcionales actuales:
+
+- `/login`
+- `/dashboard`
+- `/clientes`
+- `/taller`
+- `/ordenes`
+- `/ordenes/[id]`
+- `/presupuestos`
+- `/presupuestos/[id]`
+- `/almacen`
+- `/refacciones`
+
+Nota: `Taller` agrupa visualmente órdenes y presupuestos. `Almacén` concentra refacciones e inventario.
+
+## Seeds y acceso inicial
+
+El proyecto incluye seed para generar usuario administrador.
+
+Ejecutar:
+
+```bash
+npm run prisma:seed
+```
+
+Las credenciales concretas dependen de las variables de entorno configuradas, especialmente:
+
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD`
+
+## Documentación complementaria
+
+- [FUNCIONALIDADES.md](FUNCIONALIDADES.md)
+- [backend/DEPRECATED.md](backend/DEPRECATED.md)
+
+## Notas
+
+- El frontend legacy y el backend legacy siguen presentes solo como referencia o migración.
+- La base activa del sistema hoy está en `frontend-next/` y `backend-nest/`.
+- Si el proyecto va a producción, se recomienda añadir HTTPS real, rotación de secretos, observabilidad y pipeline de despliegue.
