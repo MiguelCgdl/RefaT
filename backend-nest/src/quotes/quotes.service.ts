@@ -127,6 +127,9 @@ export class QuotesService {
 
       const ref = await this.prisma.refaccion.findUnique({ where: { id: dto.refaccionId } });
       if (!ref) throw new NotFoundException('Refacción no encontrada');
+      if (Number(ref.stock) <= 0) {
+        throw new BadRequestException({ detalle: `La refacción ${ref.sku} no tiene existencia disponible.` });
+      }
 
       if (precio == null) {
         precio = Number(ref.precioVenta);

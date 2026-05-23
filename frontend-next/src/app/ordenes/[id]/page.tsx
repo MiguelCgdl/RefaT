@@ -41,6 +41,7 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
   const { token } = useAuth();
   const qc = useQueryClient();
   const toast = useRef<Toast>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const ordenId = parseInt(params.id, 10);
 
   const { data: orden, isLoading: loadingOrden } = useQuery({
@@ -66,6 +67,7 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
   const presupuestoActivo = presupuestos[0];
 
   const [tipoLinea, setTipoLinea] = useState<'SERVICIO' | 'REFACCION'>('REFACCION');
+  const [selectedRefaccionId, setSelectedRefaccionId] = useState<number | null>(null);
   const [diagnostico, setDiagnostico] = useState('');
   const [savingDiag, setSavingDiag] = useState(false);
 
@@ -86,6 +88,8 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['presupuestos-orden', ordenId] });
+      setSelectedRefaccionId(null);
+      formRef.current?.reset();
       toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Concepto agregado' });
     },
     onError: (err: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: err.message }),
@@ -127,8 +131,9 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
   }
 
   const refaccionOptions = refacciones?.results?.map((r: any) => ({
-    label: `[${r.sku}] ${r.nombre} — Stock: ${r.stock}`,
-    value: r.id
+    label: `[${r.sku}] ${r.nombre} — Stock: ${r.stock}${Number(r.stock) <= 0 ? ' (Sin existencia)' : ''}`,
+    value: r.id,
+    disabled: Number(r.stock) <= 0,
   })) || [];
 
   return (
@@ -248,7 +253,10 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
                 </button>
                 <button
                   type="button"
-                  onClick={() => setTipoLinea('SERVICIO')}
+                  onClick={() => {
+                    setTipoLinea('SERVICIO');
+                    setSelectedRefaccionId(null);
+                  }}
                   className={`flex-1 py-4 text-[10px] font-black uppercase tracking-[0.2em] rounded-[1.5rem] transition-all flex justify-center items-center gap-3 ${tipoLinea === 'SERVICIO' ? 'bg-white text-blue-600 shadow-xl ring-1 ring-blue-500/10' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                   <Wrench className="w-5 h-5" /> Mano de Obra
@@ -256,6 +264,7 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
               </div>
 
               <form
+                ref={formRef}
                 className="grid grid-cols-1 gap-6"
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -265,19 +274,40 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
                     descuento: Number(fd.get('descuento') || 0),
                   };
                   if (tipoLinea === 'REFACCION') {
-                    data.refaccionId = Number(fd.get('refaccionId'));
+                    if (!selectedRefaccionId) {
+                      toast.current?.show({
+                        severity: 'warn',
+                        summary: 'Selecciona una refacción',
+                        detail: 'Debes elegir una pieza del inventario antes de agregarla.',
+                      });
+                      return;
+                    }
+                    data.refaccionId = selectedRefaccionId;
                   } else {
                     data.descripcion = String(fd.get('descripcion'));
                     data.precioUnitario = Number(fd.get('precioUnitario'));
                   }
                   addLineaMutation.mutate(data);
-                  (e.currentTarget as HTMLFormElement).reset();
                 }}
               >
                 {tipoLinea === 'REFACCION' ? (
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Seleccionar Refacción del Inventario</label>
-                    <Dropdown name="refaccionId" options={refaccionOptions} required placeholder="Buscar pieza por SKU o nombre..." className="rounded-2xl border-slate-100 bg-slate-50/50 py-1" />
+                    <Dropdown
+                      value={selectedRefaccionId}
+                      options={refaccionOptions}
+                      onChange={(e) => setSelectedRefaccionId(e.value == null ? null : Number(e.value))}
+                      optionLabel="label"
+                      optionValue="value"
+                      optionDisabled="disabled"
+                      placeholder="Buscar pieza por SKU o nombre..."
+                      filter
+                      filterBy="label"
+                      showClear
+                      appendTo="self"
+                      panelClassName="refa-dropdown-panel"
+                      className="rounded-2xl border-slate-100 bg-slate-50/50 py-1"
+                    />
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

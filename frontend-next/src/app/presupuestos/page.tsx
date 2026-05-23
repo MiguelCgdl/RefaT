@@ -92,8 +92,12 @@ export default function PresupuestosPage({ hideHeader = false }: { hideHeader?: 
       const a = document.createElement('a');
       a.href = url; a.download = `Presupuesto_${folio}.pdf`; a.click();
       window.URL.revokeObjectURL(url);
-    } catch {
-      toast.current?.show({ severity: 'error', summary: 'Error', detail: 'No se pudo generar el PDF' });
+    } catch (error: any) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: error?.message || 'No se pudo generar el PDF',
+      });
     }
   };
 

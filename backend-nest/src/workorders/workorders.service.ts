@@ -116,6 +116,8 @@ export class WorkordersService {
     const row = await this.prisma.ordenTrabajo.update({
       where: { id },
       data: {
+        vehiculoId: dto.vehiculoId,
+        quejaCliente: dto.quejaCliente,
         estado: dto.estado,
         diagnostico: dto.diagnostico,
         mecanicoId: dto.mecanicoId,

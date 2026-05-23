@@ -3,6 +3,14 @@ import { EstadoOrden, PrioridadOrden } from '@prisma/client';
 
 export class UpdateOrdenDto {
   @IsOptional()
+  @IsInt()
+  vehiculoId?: number;
+
+  @IsOptional()
+  @IsString()
+  quejaCliente?: string;
+
+  @IsOptional()
   @IsEnum(EstadoOrden)
   estado?: EstadoOrden;
 

@@ -36,6 +36,7 @@ export default function OrdenesPage({ hideHeader = false }: { hideHeader?: boole
   const { token } = useAuth();
   const qc = useQueryClient();
   const toast = useRef<Toast>(null);
+  const dropdownAppendTo = typeof window !== 'undefined' ? document.body : undefined;
 
   const { data: ordenes, isLoading } = useQuery({
     queryKey: ['ordenes'],
@@ -53,6 +54,8 @@ export default function OrdenesPage({ hideHeader = false }: { hideHeader?: boole
   const [showCreate, setShowCreate] = useState(false);
   const [editItem, setEditItem] = useState<OrdenTrabajo | null>(null);
   const [deleteItem, setDeleteItem] = useState<OrdenTrabajo | null>(null);
+  const [createVehiculoId, setCreateVehiculoId] = useState<number | null>(null);
+  const [createPrioridad, setCreatePrioridad] = useState<string>('NORMAL');
   const [editVehiculoId, setEditVehiculoId] = useState<number | null>(null);
   const [editEstado, setEditEstado] = useState<string>('');
   const [editPrioridad, setEditPrioridad] = useState<string>('');
@@ -69,6 +72,8 @@ export default function OrdenesPage({ hideHeader = false }: { hideHeader?: boole
     onSuccess: () => { 
       qc.invalidateQueries({ queryKey: ['ordenes'] }); 
       setShowCreate(false);
+      setCreateVehiculoId(null);
+      setCreatePrioridad('NORMAL');
       toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Orden creada correctamente' });
     },
     onError: (e: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: e.message }),
@@ -221,34 +226,72 @@ export default function OrdenesPage({ hideHeader = false }: { hideHeader?: boole
       <Dialog 
         header="Nueva Orden de Trabajo" 
         visible={showCreate} 
-        style={{ width: '450px' }} 
-        onHide={() => setShowCreate(false)}
+        style={{ width: 'min(92vw, 520px)' }} 
+        onHide={() => {
+          setShowCreate(false);
+          setCreateVehiculoId(null);
+          setCreatePrioridad('NORMAL');
+        }}
         className="rounded-3xl"
       >
-        <form className="grid grid-cols-1 gap-4 pt-4" onSubmit={e => {
+        <form className="grid grid-cols-1 gap-5 pt-3 sm:gap-6 sm:pt-4" onSubmit={e => {
           e.preventDefault();
+          if (!createVehiculoId) {
+            toast.current?.show({ severity: 'warn', summary: 'Vehículo requerido', detail: 'Selecciona un vehículo para crear la orden.' });
+            return;
+          }
           const fd = new FormData(e.currentTarget);
           createMutation.mutate({
-            vehiculoId: Number(fd.get('vehiculoId')),
+            vehiculoId: createVehiculoId,
             quejaCliente: String(fd.get('quejaCliente')),
-            prioridad: String(fd.get('prioridad') || 'NORMAL'),
+            prioridad: createPrioridad,
           });
         }}>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-slate-500 uppercase">Vehículo *</label>
-            <Dropdown name="vehiculoId" options={vehicleOptions} placeholder="Seleccionar vehículo…" required className="rounded-xl" />
+          <div className="flex flex-col gap-2">
+            <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Vehículo *</label>
+            <Dropdown
+              value={createVehiculoId}
+              options={vehicleOptions}
+              onChange={(e) => setCreateVehiculoId(e.value)}
+              placeholder="Seleccionar vehículo…"
+              required
+              className="rounded-xl"
+              optionLabel="label"
+              optionValue="value"
+              appendTo={dropdownAppendTo}
+              panelClassName="refa-dropdown-panel"
+            />
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-slate-500 uppercase">Prioridad</label>
-            <Dropdown name="prioridad" options={PRIORIDADES} defaultValue="NORMAL" className="rounded-xl" />
+          <div className="flex flex-col gap-2">
+            <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Prioridad</label>
+            <Dropdown
+              value={createPrioridad}
+              options={PRIORIDADES}
+              onChange={(e) => setCreatePrioridad(e.value)}
+              className="rounded-xl"
+              optionLabel="label"
+              optionValue="value"
+              appendTo={dropdownAppendTo}
+              panelClassName="refa-dropdown-panel"
+            />
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-slate-500 uppercase">Queja del Cliente *</label>
+          <div className="flex flex-col gap-2">
+            <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Queja del Cliente *</label>
             <InputTextarea name="quejaCliente" rows={3} required className="rounded-xl" placeholder="El cliente reporta..." />
           </div>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button label="Cancelar" type="button" text onClick={() => setShowCreate(false)} />
-            <Button label="Crear Orden" type="submit" loading={createMutation.isPending} />
+          <div className="mt-2 flex flex-col-reverse gap-3 sm:mt-4 sm:flex-row sm:justify-end">
+            <Button
+              label="Cancelar"
+              type="button"
+              text
+              onClick={() => {
+                setShowCreate(false);
+                setCreateVehiculoId(null);
+                setCreatePrioridad('NORMAL');
+              }}
+              className="w-full sm:w-auto"
+            />
+            <Button label="Crear Orden" type="submit" loading={createMutation.isPending} className="w-full sm:w-auto" />
           </div>
         </form>
       </Dialog>
@@ -257,7 +300,7 @@ export default function OrdenesPage({ hideHeader = false }: { hideHeader?: boole
       <Dialog 
         header="Editar Orden de Trabajo" 
         visible={!!editItem} 
-        style={{ width: '500px' }} 
+        style={{ width: 'min(92vw, 560px)' }} 
         onHide={() => {
           setEditItem(null);
           setEditVehiculoId(null);
@@ -267,7 +310,7 @@ export default function OrdenesPage({ hideHeader = false }: { hideHeader?: boole
         className="rounded-3xl"
       >
         {editItem && (
-          <form className="grid grid-cols-1 gap-4 pt-4" onSubmit={e => {
+          <form className="grid grid-cols-1 gap-5 pt-3 sm:gap-6 sm:pt-4" onSubmit={e => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
             updateMutation.mutate({
@@ -281,8 +324,8 @@ export default function OrdenesPage({ hideHeader = false }: { hideHeader?: boole
               }
             });
           }}>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-slate-500 uppercase">Vehículo *</label>
+            <div className="flex flex-col gap-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Vehículo *</label>
               <Dropdown
                 value={editVehiculoId}
                 options={vehicleOptions}
@@ -290,39 +333,51 @@ export default function OrdenesPage({ hideHeader = false }: { hideHeader?: boole
                 placeholder="Seleccionar vehículo…"
                 required
                 className="rounded-xl"
+                optionLabel="label"
+                optionValue="value"
+                appendTo={dropdownAppendTo}
+                panelClassName="refa-dropdown-panel"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">Estado</label>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Estado</label>
                 <Dropdown
                   value={editEstado}
                   options={STATUS}
                   onChange={(e) => setEditEstado(e.value)}
                   className="rounded-xl"
+                  optionLabel="label"
+                  optionValue="value"
+                  appendTo={dropdownAppendTo}
+                  panelClassName="refa-dropdown-panel"
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">Prioridad</label>
+              <div className="flex flex-col gap-2">
+                <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Prioridad</label>
                 <Dropdown
                   value={editPrioridad}
                   options={PRIORIDADES}
                   onChange={(e) => setEditPrioridad(e.value)}
                   className="rounded-xl"
+                  optionLabel="label"
+                  optionValue="value"
+                  appendTo={dropdownAppendTo}
+                  panelClassName="refa-dropdown-panel"
                 />
               </div>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-slate-500 uppercase">Queja del Cliente *</label>
+            <div className="flex flex-col gap-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Queja del Cliente *</label>
               <InputTextarea name="quejaCliente" rows={2} required defaultValue={editItem.queja_cliente} className="rounded-xl" />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-slate-500 uppercase">Diagnóstico Técnico</label>
+            <div className="flex flex-col gap-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Diagnóstico Técnico</label>
               <InputTextarea name="diagnostico" rows={2} defaultValue={editItem.diagnostico} className="rounded-xl" placeholder="Se detectó..." />
             </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <Button label="Cancelar" type="button" text onClick={() => setEditItem(null)} />
-              <Button label="Actualizar" type="submit" loading={updateMutation.isPending} />
+            <div className="mt-2 flex flex-col-reverse gap-3 sm:mt-4 sm:flex-row sm:justify-end">
+              <Button label="Cancelar" type="button" text onClick={() => setEditItem(null)} className="w-full sm:w-auto" />
+              <Button label="Actualizar" type="submit" loading={updateMutation.isPending} className="w-full sm:w-auto" />
             </div>
           </form>
         )}

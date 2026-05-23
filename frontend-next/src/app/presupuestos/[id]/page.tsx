@@ -71,8 +71,9 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
   }
 
   const refaccionOptions = refacciones?.results?.map((r: any) => ({
-    label: `[${r.sku}] ${r.nombre} — Stock: ${r.stock}`,
-    value: r.id
+    label: `[${r.sku}] ${r.nombre} — Stock: ${r.stock}${Number(r.stock) <= 0 ? ' (Sin existencia)' : ''}`,
+    value: r.id,
+    disabled: Number(r.stock) <= 0,
   })) || [];
 
   return (
@@ -158,10 +159,16 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
                   <Dropdown
                     value={selectedRefaccionId}
                     options={refaccionOptions}
-                    onChange={(e) => setSelectedRefaccionId(e.value)}
+                    onChange={(e) => setSelectedRefaccionId(e.value == null ? null : Number(e.value))}
+                    optionLabel="label"
+                    optionValue="value"
+                    optionDisabled="disabled"
                     placeholder="Seleccionar pieza…"
                     filter
+                    filterBy="label"
                     showClear
+                    appendTo="self"
+                    panelClassName="refa-dropdown-panel"
                     className="rounded-xl border-slate-200"
                   />
                 </div>

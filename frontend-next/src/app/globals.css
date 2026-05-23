@@ -44,6 +44,9 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   font-family: var(--font-sans), sans-serif;
   background-attachment: fixed;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 ::selection {
@@ -282,12 +285,28 @@ body {
 .p-password-input,
 .p-inputnumber-input {
   width: 100%;
+  min-height: 3.55rem;
   border-radius: 1.5rem !important;
   border: 1px solid var(--border-color) !important;
-  background: rgba(2, 6, 23, 0.46) !important;
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.7) 0%, rgba(2, 6, 23, 0.52) 100%) !important;
   color: var(--text-strong) !important;
+  font-size: 0.98rem !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), var(--shadow-soft) !important;
   transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.p-inputtext,
+.p-inputnumber-input {
+  padding: 0.95rem 1.15rem !important;
+}
+
+.p-inputtextarea {
+  min-height: 7.25rem;
+  padding: 1rem 1.15rem !important;
+  line-height: 1.55 !important;
+  resize: vertical;
 }
 
 .p-inputtext:hover,
@@ -315,12 +334,31 @@ body {
   color: var(--text-main) !important;
 }
 
+.p-dropdown .p-dropdown-label {
+  padding: 0.95rem 1.15rem !important;
+  font-size: 0.98rem !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+}
+
+.p-dropdown .p-dropdown-trigger {
+  width: 3.25rem !important;
+  color: var(--text-muted) !important;
+}
+
+.p-dropdown-panel .p-dropdown-item,
+.p-dropdown-panel .p-dropdown-empty-message {
+  padding: 0.9rem 1rem !important;
+  font-size: 0.95rem !important;
+}
+
 .p-dropdown-panel {
   background: rgba(10, 16, 32, 0.98) !important;
   border: 1px solid var(--border-color) !important;
   border-radius: 1.25rem !important;
   box-shadow: var(--shadow-panel) !important;
   overflow: hidden;
+  z-index: 1200 !important;
 }
 
 .p-dropdown-panel .p-dropdown-item {
@@ -333,10 +371,19 @@ body {
   color: var(--text-strong) !important;
 }
 
+.refa-dropdown-panel {
+  z-index: 1200 !important;
+}
+
 .p-button {
   border: none !important;
   border-radius: 1.5rem !important;
+  min-height: 3.25rem;
+  padding: 0.9rem 1.35rem !important;
   background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-hover) 55%, var(--primary-cyan) 100%) !important;
+  color: var(--text-strong) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em;
   box-shadow: 0 18px 36px -22px rgba(37, 99, 235, 0.9) !important;
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, background 0.2s ease !important;
 }
@@ -448,6 +495,8 @@ body {
 .p-dialog {
   border-radius: 2rem !important;
   overflow: hidden;
+  width: min(92vw, 42rem) !important;
+  max-width: calc(100vw - 1.25rem) !important;
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.97) 0%, rgba(10, 16, 32, 0.98) 100%) !important;
   border: 1px solid var(--border-color) !important;
   box-shadow: var(--shadow-panel) !important;
@@ -467,6 +516,7 @@ body {
 
 .p-dialog .p-dialog-title {
   color: var(--text-strong) !important;
+  font-size: clamp(1.3rem, 2vw, 1.75rem) !important;
   font-weight: 900 !important;
   letter-spacing: -0.02em;
 }
@@ -491,6 +541,88 @@ body {
 .p-toast .p-toast-detail,
 .p-toast .p-toast-icon-close {
   color: var(--text-main) !important;
+}
+
+.p-password {
+  width: 100%;
+}
+
+.p-password .p-inputtext {
+  width: 100%;
+  padding-right: 3rem !important;
+}
+
+.p-password .p-icon-field > .p-input-icon,
+.p-password .p-icon-field > .p-icon-wrapper {
+  right: 1rem !important;
+  color: var(--text-muted) !important;
+}
+
+.p-datatable,
+.p-card,
+.p-dialog,
+.p-toast .p-toast-message {
+  backdrop-filter: blur(16px);
+}
+
+@media (max-width: 1024px) {
+  .p-dialog .p-dialog-header {
+    padding: 1.5rem 1.5rem 0.9rem !important;
+  }
+
+  .p-dialog .p-dialog-content {
+    padding: 1.15rem 1.5rem 1.5rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .p-inputtext,
+  .p-inputtextarea,
+  .p-dropdown,
+  .p-password-input,
+  .p-inputnumber-input {
+    min-height: 3.15rem;
+    border-radius: 1.2rem !important;
+    font-size: 0.95rem !important;
+  }
+
+  .p-inputtext,
+  .p-inputnumber-input,
+  .p-dropdown .p-dropdown-label {
+    padding: 0.82rem 0.95rem !important;
+  }
+
+  .p-inputtextarea {
+    min-height: 6.2rem;
+    padding: 0.9rem 0.95rem !important;
+  }
+
+  .p-dropdown .p-dropdown-trigger {
+    width: 2.9rem !important;
+  }
+
+  .p-button {
+    min-height: 3rem;
+    padding: 0.82rem 1.05rem !important;
+    border-radius: 1.2rem !important;
+  }
+
+  .p-dialog {
+    border-radius: 1.4rem !important;
+  }
+
+  .p-dialog .p-dialog-header {
+    padding: 1.15rem 1rem 0.8rem !important;
+  }
+
+  .p-dialog .p-dialog-content {
+    padding: 1rem 1rem 1.15rem !important;
+  }
+
+  .p-datatable.p-datatable-modern .p-datatable-thead > tr > th,
+  .p-datatable.p-datatable-modern .p-datatable-tbody > tr > td {
+    padding: 1rem 0.9rem !important;
+  }
 }
 
 .p-datatable.p-datatable-modern {

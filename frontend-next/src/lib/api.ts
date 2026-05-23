@@ -2,10 +2,11 @@ import type { Cliente, DashboardResumen, OrdenTrabajo, PaginatedResponse, Refacc
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api';
 
-type Options = RequestInit & { token?: string };
+type ResponseType = 'json' | 'blob' | 'text';
+type Options = RequestInit & { token?: string; responseType?: ResponseType };
 
 async function request<T>(path: string, options: Options = {}): Promise<T> {
-  const { token, headers, ...rest } = options;
+  const { token, headers, responseType = 'json', ...rest } = options;
   const res = await fetch(`${API_BASE}${path}`, {
     ...rest,
     headers: {
@@ -20,6 +21,12 @@ async function request<T>(path: string, options: Options = {}): Promise<T> {
     throw new Error(msg ?? `Error HTTP ${res.status}`);
   }
   if (res.status === 204) return undefined as T;
+  if (responseType === 'blob') {
+    return res.blob() as Promise<T>;
+  }
+  if (responseType === 'text') {
+    return res.text() as Promise<T>;
+  }
   return res.json() as Promise<T>;
 }
 
@@ -84,7 +91,6 @@ export const enviarPresupuesto = (token: string, id: number, method: 'email' | '
   request<any>(`/presupuestos/${id}/enviar`, { method: 'POST', body: JSON.stringify({ method }), token });
 
 export const exportPdfPresupuesto = (token: string, id: number) =>
-  request<Blob>(`/reportes/presupuestos/${id}/pdf`, { token });
+  request<Blob>(`/reportes/presupuestos/${id}/pdf`, { token, responseType: 'blob' });
 export const exportRefaccionesExcel = (token: string) =>
-  request<Blob>('/reportes/refacciones/excel', { token });
-
+  request<Blob>('/reportes/refacciones/excel', { token, responseType: 'blob' });
