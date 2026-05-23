@@ -20,6 +20,7 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
   const qc = useQueryClient();
   const toast = useRef<Toast>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const dropdownAppendTo = typeof window === 'undefined' ? 'self' : document.body;
   const id = parseInt(params.id, 10);
 
   const { data: presupuesto, isLoading } = useQuery({
@@ -167,7 +168,7 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
                     filter
                     filterBy="label"
                     showClear
-                    appendTo="self"
+                    appendTo={dropdownAppendTo}
                     panelClassName="refa-dropdown-panel"
                     className="rounded-xl border-slate-200"
                   />

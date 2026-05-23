@@ -89,6 +89,8 @@ export default function ClientesVehiculosPage() {
   const { token } = useAuth();
   const qc = useQueryClient();
   const toast = useRef<Toast>(null);
+  const dropdownAppendTo = typeof window === 'undefined' ? 'self' : document.body;
+  const dialogBaseZIndex = 2000;
   
   // Queries
   const { data: clientesData, isLoading: loadingClientes } = useQuery({ 
@@ -391,6 +393,7 @@ export default function ClientesVehiculosPage() {
         className="rounded-[3rem] shadow-3d border border-slate-200 overflow-hidden"
         headerClassName="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-8 border-b border-blue-800/30"
         contentClassName="bg-gradient-to-b from-white to-slate-50/80 p-8"
+        baseZIndex={dialogBaseZIndex}
       >
         <form className="grid grid-cols-1 gap-6 pt-2" onSubmit={(e) => {
           e.preventDefault();
@@ -448,6 +451,7 @@ export default function ClientesVehiculosPage() {
         className="rounded-[3rem] shadow-3d border border-slate-200 overflow-hidden"
         headerClassName="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-8 border-b border-emerald-800/30"
         contentClassName="bg-gradient-to-b from-white to-slate-50/80 p-8"
+        baseZIndex={dialogBaseZIndex}
       >
         <form className="grid grid-cols-1 gap-6 pt-2" onSubmit={(e) => {
           e.preventDefault();
@@ -486,6 +490,10 @@ export default function ClientesVehiculosPage() {
                 }}
                 placeholder="Seleccionar marca..."
                 className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
+                optionLabel="label"
+                optionValue="value"
+                appendTo={dropdownAppendTo}
+                panelClassName="refa-dropdown-panel"
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -497,6 +505,10 @@ export default function ClientesVehiculosPage() {
                 placeholder={selectedMarca ? 'Seleccionar modelo...' : 'Primero selecciona una marca'}
                 disabled={!selectedMarca}
                 className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
+                optionLabel="label"
+                optionValue="value"
+                appendTo={dropdownAppendTo}
+                panelClassName="refa-dropdown-panel"
               />
             </div>
           </div>
@@ -524,6 +536,10 @@ export default function ClientesVehiculosPage() {
                 }}
                 placeholder="Seleccionar color..."
                 className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
+                optionLabel="label"
+                optionValue="value"
+                appendTo={dropdownAppendTo}
+                panelClassName="refa-dropdown-panel"
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -555,6 +571,7 @@ export default function ClientesVehiculosPage() {
         visible={!!historyVehiculo} 
         style={{ width: '600px' }} 
         onHide={() => setHistoryVehiculo(null)}
+        baseZIndex={dialogBaseZIndex}
       >
         <div className="space-y-4 pt-4">
           {loadingHistorial ? (
@@ -587,6 +604,7 @@ export default function ClientesVehiculosPage() {
         visible={!!deleteClienteItem || !!deleteVehiculoItem} 
         style={{ width: '350px' }} 
         onHide={() => { setDeleteClienteItem(null); setDeleteVehiculoItem(null); }}
+        baseZIndex={dialogBaseZIndex}
         footer={
           <div className="flex justify-end gap-2">
             <Button label="No" text onClick={() => { setDeleteClienteItem(null); setDeleteVehiculoItem(null); }} />

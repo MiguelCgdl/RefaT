@@ -42,6 +42,7 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
   const qc = useQueryClient();
   const toast = useRef<Toast>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const dropdownAppendTo = typeof window === 'undefined' ? 'self' : document.body;
   const ordenId = parseInt(params.id, 10);
 
   const { data: orden, isLoading: loadingOrden } = useQuery({
@@ -304,7 +305,7 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
                       filter
                       filterBy="label"
                       showClear
-                      appendTo="self"
+                      appendTo={dropdownAppendTo}
                       panelClassName="refa-dropdown-panel"
                       className="rounded-2xl border-slate-100 bg-slate-50/50 py-1"
                     />

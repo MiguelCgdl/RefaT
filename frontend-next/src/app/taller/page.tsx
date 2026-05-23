@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { TabView, TabPanel } from 'primereact/tabview';
 import { Wrench, ClipboardList, Calculator } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import OrdenesPage from '../ordenes/page';
-import PresupuestosPage from '../presupuestos/page';
+import OrdenesView from '../ordenes/OrdenesView';
+import PresupuestosView from '../presupuestos/PresupuestosView';
 
 export default function TallerPage() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -36,10 +36,10 @@ export default function TallerPage() {
           className="p-tabview-modern"
         >
           <TabPanel header={tabHeader('Órdenes de Trabajo', ClipboardList)}>
-            <OrdenesPage hideHeader />
+            <OrdenesView hideHeader />
           </TabPanel>
           <TabPanel header={tabHeader('Presupuestos', Calculator)}>
-            <PresupuestosPage hideHeader />
+            <PresupuestosView hideHeader />
           </TabPanel>
         </TabView>
       </div>

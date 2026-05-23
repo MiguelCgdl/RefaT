@@ -1,7 +1,7 @@
 'use client';
 
-import RefaccionesPage from '../refacciones/page';
+import RefaccionesView from '../refacciones/RefaccionesView';
 
 export default function AlmacenPage() {
-  return <RefaccionesPage />;
+  return <RefaccionesView />;
 }

@@ -358,7 +358,8 @@ body {
   border-radius: 1.25rem !important;
   box-shadow: var(--shadow-panel) !important;
   overflow: hidden;
-  z-index: 1200 !important;
+  z-index: 3200 !important;
+  backdrop-filter: blur(18px);
 }
 
 .p-dropdown-panel .p-dropdown-item {
@@ -372,7 +373,19 @@ body {
 }
 
 .refa-dropdown-panel {
-  z-index: 1200 !important;
+  z-index: 3200 !important;
+}
+
+.p-dropdown-panel.p-component {
+  z-index: 3200 !important;
+}
+
+.p-dropdown-items-wrapper {
+  max-height: min(18rem, 45vh) !important;
+}
+
+.p-dropdown-items {
+  padding: 0.35rem !important;
 }
 
 .p-button {
@@ -494,7 +507,7 @@ body {
 
 .p-dialog {
   border-radius: 2rem !important;
-  overflow: hidden;
+  overflow: visible !important;
   width: min(92vw, 42rem) !important;
   max-width: calc(100vw - 1.25rem) !important;
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.97) 0%, rgba(10, 16, 32, 0.98) 100%) !important;
@@ -523,6 +536,7 @@ body {
 
 .p-dialog .p-dialog-content {
   padding: 1.5rem 2rem 2rem !important;
+  overflow: visible !important;
 }
 
 .p-dialog .p-dialog-header-icon {
