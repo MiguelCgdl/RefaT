@@ -10772,6 +10772,48 @@ body {
   padding: 0.35rem !important;
 }
 
+.refa-native-select {
+  width: 100%;
+  min-height: 3.55rem;
+  padding: 0.95rem 3rem 0.95rem 1.15rem;
+  border-radius: 1.5rem !important;
+  border: 1px solid var(--border-color) !important;
+  background:
+    linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.7) 0%, rgba(2, 6, 23, 0.52) 100%);
+  background-position:
+    calc(100% - 1.3rem) calc(50% - 0.16rem),
+    calc(100% - 0.95rem) calc(50% - 0.16rem),
+    0 0;
+  background-size: 0.45rem 0.45rem, 0.45rem 0.45rem, 100% 100%;
+  background-repeat: no-repeat;
+  color: var(--text-strong) !important;
+  font-size: 0.98rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), var(--shadow-soft) !important;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  -moz-appearance: none;
+       appearance: none;
+  -webkit-appearance: none;
+}
+
+.refa-native-select:hover {
+  border-color: var(--border-color-strong) !important;
+}
+
+.refa-native-select:focus {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.72) !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12), var(--shadow-soft) !important;
+}
+
+.refa-native-select option {
+  background: #0a1020;
+  color: var(--text-strong);
+}
+
 .p-button {
   border: none !important;
   border-radius: 1.5rem !important;
@@ -10993,6 +11035,13 @@ body {
   .p-inputtextarea {
     min-height: 6.2rem;
     padding: 0.9rem 0.95rem !important;
+  }
+
+  .refa-native-select {
+    min-height: 3.15rem;
+    padding: 0.82rem 2.7rem 0.82rem 0.95rem;
+    border-radius: 1.2rem !important;
+    font-size: 0.95rem !important;
   }
 
   .p-dropdown .p-dropdown-trigger {

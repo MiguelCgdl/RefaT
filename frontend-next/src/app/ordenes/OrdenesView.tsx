@@ -345,29 +345,31 @@ export default function OrdenesView({ hideHeader = false }: { hideHeader?: boole
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-4">
               <div className="flex flex-col gap-2">
                 <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Estado</label>
-                <Dropdown
+                <select
                   value={editEstado}
-                  options={STATUS}
-                  onChange={(e) => setEditEstado(e.value)}
-                  className="rounded-xl"
-                  optionLabel="label"
-                  optionValue="value"
-                  appendTo={dropdownAppendTo}
-                  panelClassName="refa-dropdown-panel"
-                />
+                  onChange={(e) => setEditEstado(e.target.value)}
+                  className="refa-native-select rounded-xl"
+                >
+                  {STATUS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Prioridad</label>
-                <Dropdown
+                <select
                   value={editPrioridad}
-                  options={PRIORIDADES}
-                  onChange={(e) => setEditPrioridad(e.value)}
-                  className="rounded-xl"
-                  optionLabel="label"
-                  optionValue="value"
-                  appendTo={dropdownAppendTo}
-                  panelClassName="refa-dropdown-panel"
-                />
+                  onChange={(e) => setEditPrioridad(e.target.value)}
+                  className="refa-native-select rounded-xl"
+                >
+                  {PRIORIDADES.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className="flex flex-col gap-2">
