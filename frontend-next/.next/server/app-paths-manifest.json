@@ -1,9 +1,10 @@
 {
-  "/ordenes/[id]/page": "app/ordenes/[id]/page.js",
+  "/page": "app/page.js",
   "/taller/page": "app/taller/page.js",
-  "/presupuestos/[id]/page": "app/presupuestos/[id]/page.js",
-  "/clientes/page": "app/clientes/page.js",
+  "/ordenes/page": "app/ordenes/page.js",
   "/presupuestos/page": "app/presupuestos/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/almacen/page": "app/almacen/page.js"
+  "/clientes/page": "app/clientes/page.js",
+  "/almacen/page": "app/almacen/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/login/page": "app/login/page.js"
 }
