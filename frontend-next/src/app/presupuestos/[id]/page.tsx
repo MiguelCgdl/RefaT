@@ -10,17 +10,17 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
-import { Dropdown } from 'primereact/dropdown';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { ProgressBar } from 'primereact/progressbar';
+
+const normalizeInventorySearch = (value: string) => value.toUpperCase().trim();
 
 export default function PresupuestoDetallePage({ params }: { params: { id: string } }) {
   const { token } = useAuth();
   const qc = useQueryClient();
   const toast = useRef<Toast>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const dropdownAppendTo = typeof window === 'undefined' ? 'self' : document.body;
   const id = parseInt(params.id, 10);
 
   const { data: presupuesto, isLoading } = useQuery({
@@ -37,6 +37,7 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
 
   const [tipoLinea, setTipoLinea] = useState<'SERVICIO' | 'REFACCION'>('REFACCION');
   const [selectedRefaccionId, setSelectedRefaccionId] = useState<number | null>(null);
+  const [refaccionSearch, setRefaccionSearch] = useState('');
 
   const addLineaMutation = useMutation({
     mutationFn: (data: any) => addLineaPresupuesto(token!, {
@@ -47,6 +48,7 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['presupuesto', id] });
       setSelectedRefaccionId(null);
+      setRefaccionSearch('');
       formRef.current?.reset();
       toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Concepto agregado' });
     },
@@ -76,6 +78,10 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
     value: r.id,
     disabled: Number(r.stock) <= 0,
   })) || [];
+  const normalizedRefaccionSearch = normalizeInventorySearch(refaccionSearch);
+  const filteredRefaccionOptions = normalizedRefaccionSearch
+    ? refaccionOptions.filter((option) => normalizeInventorySearch(option.label).includes(normalizedRefaccionSearch))
+    : refaccionOptions;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -157,21 +163,26 @@ export default function PresupuestoDetallePage({ params }: { params: { id: strin
               {tipoLinea === 'REFACCION' ? (
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Refacción del Inventario *</label>
-                  <Dropdown
-                    value={selectedRefaccionId}
-                    options={refaccionOptions}
-                    onChange={(e) => setSelectedRefaccionId(e.value == null ? null : Number(e.value))}
-                    optionLabel="label"
-                    optionValue="value"
-                    optionDisabled="disabled"
-                    placeholder="Seleccionar pieza…"
-                    filter
-                    filterBy="label"
-                    showClear
-                    appendTo={dropdownAppendTo}
-                    panelClassName="refa-dropdown-panel"
-                    className="rounded-xl border-slate-200"
+                  <InputText
+                    value={refaccionSearch}
+                    onChange={(e) => setRefaccionSearch(e.target.value.toUpperCase())}
+                    className="rounded-xl border-slate-200 p-3 font-semibold"
+                    placeholder="Buscar pieza por SKU o nombre..."
                   />
+                  <select
+                    value={selectedRefaccionId ?? ''}
+                    onChange={(e) => setSelectedRefaccionId(e.target.value ? Number(e.target.value) : null)}
+                    className="refa-native-select rounded-xl border-slate-200"
+                  >
+                    <option value="">
+                      Seleccionar pieza...
+                    </option>
+                    {filteredRefaccionOptions.map((option) => (
+                      <option key={option.value} value={option.value} disabled={option.disabled}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4">

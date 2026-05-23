@@ -10,7 +10,6 @@ import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
-import { Dropdown } from 'primereact/dropdown';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 
@@ -25,7 +24,6 @@ export default function PresupuestosView({ hideHeader = false }: { hideHeader?: 
   const { token } = useAuth();
   const qc = useQueryClient();
   const toast = useRef<Toast>(null);
-  const dropdownAppendTo = typeof window === 'undefined' ? 'self' : document.body;
   const dialogBaseZIndex = 2000;
 
   const { data: presupuestos, isLoading } = useQuery({
@@ -184,13 +182,13 @@ export default function PresupuestosView({ hideHeader = false }: { hideHeader?: 
 
       <div className="card bg-white/80 backdrop-blur-xl rounded-[3rem] shadow-3d border border-slate-100 overflow-hidden transition-all hover:shadow-[0_30px_60px_rgba(0,0,0,0.1)]">
         <div className="p-8 border-b border-slate-50 bg-gradient-to-r from-slate-50/50 to-transparent">
-          <div className="relative group max-w-2xl">
-            <Search className="w-6 h-6 absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+          <div className="refa-search-shell max-w-2xl">
+            <Search className="refa-search-icon" />
             <InputText 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
               placeholder="Buscar por folio de presupuesto u orden..." 
-              className="w-full pl-14 pr-6 py-5 rounded-[2rem] border-slate-100 bg-slate-50/30 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-bold shadow-inner"
+              className="refa-search-input rounded-[2rem] border-slate-100 bg-slate-50/30 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner"
             />
           </div>
         </div>
@@ -265,18 +263,21 @@ export default function PresupuestosView({ hideHeader = false }: { hideHeader?: 
         }}>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-bold text-slate-500 uppercase">Orden de Trabajo *</label>
-            <Dropdown
-              value={createOrdenId}
-              options={ordenOptions}
-              onChange={(e) => setCreateOrdenId(e.value == null ? null : Number(e.value))}
-              placeholder="Seleccionar orden…"
+            <select
+              value={createOrdenId ?? ''}
+              onChange={(e) => setCreateOrdenId(e.target.value ? Number(e.target.value) : null)}
               required
-              className="rounded-xl"
-              optionLabel="label"
-              optionValue="value"
-              appendTo={dropdownAppendTo}
-              panelClassName="refa-dropdown-panel"
-            />
+              className="refa-native-select rounded-xl"
+            >
+              <option value="" disabled>
+                Seleccionar orden...
+              </option>
+              {ordenOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="flex justify-end gap-2 mt-4">
             <Button
@@ -315,16 +316,17 @@ export default function PresupuestosView({ hideHeader = false }: { hideHeader?: 
           }}>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold text-slate-500 uppercase">Estado del Presupuesto</label>
-              <Dropdown
+              <select
                 value={editEstado}
-                options={STATUS_OPTS}
-                onChange={(e) => setEditEstado(e.value)}
-                className="rounded-xl"
-                optionLabel="label"
-                optionValue="value"
-                appendTo={dropdownAppendTo}
-                panelClassName="refa-dropdown-panel"
-              />
+                onChange={(e) => setEditEstado(e.target.value)}
+                className="refa-native-select rounded-xl"
+              >
+                {STATUS_OPTS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <Button

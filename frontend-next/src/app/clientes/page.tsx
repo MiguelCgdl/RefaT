@@ -9,7 +9,6 @@ import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
-import { Dropdown } from 'primereact/dropdown';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
@@ -89,7 +88,6 @@ export default function ClientesVehiculosPage() {
   const { token } = useAuth();
   const qc = useQueryClient();
   const toast = useRef<Toast>(null);
-  const dropdownAppendTo = typeof window === 'undefined' ? 'self' : document.body;
   const dialogBaseZIndex = 2000;
   
   // Queries
@@ -326,13 +324,13 @@ export default function ClientesVehiculosPage() {
 
       <div className="card bg-white/80 backdrop-blur-xl rounded-[3rem] shadow-3d border border-slate-100 overflow-hidden transition-all hover:shadow-[0_30px_60px_rgba(0,0,0,0.1)]">
         <div className="p-8 border-b border-slate-50 bg-gradient-to-r from-slate-50/50 to-transparent">
-          <div className="relative group max-w-2xl">
-            <Search className="w-6 h-6 absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+          <div className="refa-search-shell max-w-2xl">
+            <Search className="refa-search-icon" />
             <InputText 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
               placeholder="Buscar cliente por nombre, email o teléfono..." 
-              className="w-full pl-14 pr-6 py-5 rounded-[2rem] border-slate-100 bg-slate-50/30 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-bold shadow-inner"
+              className="refa-search-input rounded-[2rem] border-slate-100 bg-slate-50/30 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner"
             />
           </div>
         </div>
@@ -481,35 +479,41 @@ export default function ClientesVehiculosPage() {
           <div className="grid grid-cols-2 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Marca *</label>
-              <Dropdown
+              <select
                 value={selectedMarca}
-                options={mergedMarcaOptions}
                 onChange={(e) => {
-                  setSelectedMarca(e.value);
+                  setSelectedMarca(e.target.value);
                   setSelectedModelo('');
                 }}
-                placeholder="Seleccionar marca..."
-                className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
-                optionLabel="label"
-                optionValue="value"
-                appendTo={dropdownAppendTo}
-                panelClassName="refa-dropdown-panel"
-              />
+                className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
+              >
+                <option value="" disabled>
+                  Seleccionar marca...
+                </option>
+                {mergedMarcaOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Modelo *</label>
-              <Dropdown
+              <select
                 value={selectedModelo}
-                options={modelOptions}
-                onChange={(e) => setSelectedModelo(e.value)}
-                placeholder={selectedMarca ? 'Seleccionar modelo...' : 'Primero selecciona una marca'}
+                onChange={(e) => setSelectedModelo(e.target.value)}
                 disabled={!selectedMarca}
-                className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
-                optionLabel="label"
-                optionValue="value"
-                appendTo={dropdownAppendTo}
-                panelClassName="refa-dropdown-panel"
-              />
+                className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
+              >
+                <option value="" disabled>
+                  {selectedMarca ? 'Seleccionar modelo...' : 'Primero selecciona una marca'}
+                </option>
+                {modelOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-6">
@@ -525,22 +529,25 @@ export default function ClientesVehiculosPage() {
           <div className="grid grid-cols-2 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Color</label>
-              <Dropdown
+              <select
                 value={selectedColor}
-                options={colorOptions}
                 onChange={(e) => {
-                  setSelectedColor(e.value);
-                  if (e.value !== 'Otro') {
+                  setSelectedColor(e.target.value);
+                  if (e.target.value !== 'Otro') {
                     setCustomColor('');
                   }
                 }}
-                placeholder="Seleccionar color..."
-                className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
-                optionLabel="label"
-                optionValue="value"
-                appendTo={dropdownAppendTo}
-                panelClassName="refa-dropdown-panel"
-              />
+                className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
+              >
+                <option value="" disabled>
+                  Seleccionar color...
+                </option>
+                {colorOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Kilometraje</label>

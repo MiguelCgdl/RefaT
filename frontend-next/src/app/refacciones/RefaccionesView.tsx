@@ -289,13 +289,13 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
       {/* Main Content Card - 3D Glassmorphism/Neumorphism feel */}
       <div className="card bg-white rounded-[2.5rem] shadow-3d border border-slate-100 overflow-hidden transition-all hover:shadow-[0_30px_60px_rgba(0,0,0,0.08)]">
         <div className="p-8 border-b border-slate-50 bg-gradient-to-r from-slate-50/50 to-transparent flex flex-col sm:flex-row sm:items-center gap-6">
-          <div className="relative flex-1 group">
-            <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+          <div className="refa-search-shell flex-1">
+            <Search className="refa-search-icon" />
             <InputText 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
               placeholder="Buscar por SKU o nombre de pieza..." 
-              className="w-full pl-12 pr-4 py-4 rounded-2xl border-slate-100 bg-slate-50/30 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium"
+              className="refa-search-input rounded-2xl border-slate-100 bg-slate-50/30 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all"
             />
           </div>
           <div className="flex items-center gap-3 px-4 py-2 bg-blue-50/50 rounded-2xl border border-blue-100 shadow-inner">

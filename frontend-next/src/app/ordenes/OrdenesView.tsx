@@ -11,7 +11,6 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
-import { Dropdown } from 'primereact/dropdown';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import type { OrdenTrabajo } from '@/lib/types';
@@ -32,11 +31,12 @@ const PRIORIDADES = [
   { label: 'URGENTE', value: 'URGENTE' }
 ];
 
+const normalizePlateSearch = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
 export default function OrdenesView({ hideHeader = false }: { hideHeader?: boolean }) {
   const { token } = useAuth();
   const qc = useQueryClient();
   const toast = useRef<Toast>(null);
-  const dropdownAppendTo = typeof window === 'undefined' ? 'self' : document.body;
   const dialogBaseZIndex = 2000;
 
   const { data: ordenes, isLoading } = useQuery({
@@ -57,6 +57,7 @@ export default function OrdenesView({ hideHeader = false }: { hideHeader?: boole
   const [deleteItem, setDeleteItem] = useState<OrdenTrabajo | null>(null);
   const [createVehiculoId, setCreateVehiculoId] = useState<number | null>(null);
   const [createPrioridad, setCreatePrioridad] = useState<string>('NORMAL');
+  const [createVehiculoSearch, setCreateVehiculoSearch] = useState('');
   const [editVehiculoId, setEditVehiculoId] = useState<number | null>(null);
   const [editEstado, setEditEstado] = useState<string>('');
   const [editPrioridad, setEditPrioridad] = useState<string>('');
@@ -75,6 +76,7 @@ export default function OrdenesView({ hideHeader = false }: { hideHeader?: boole
       setShowCreate(false);
       setCreateVehiculoId(null);
       setCreatePrioridad('NORMAL');
+      setCreateVehiculoSearch('');
       toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Orden creada correctamente' });
     },
     onError: (e: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: e.message }),
@@ -143,8 +145,31 @@ export default function OrdenesView({ hideHeader = false }: { hideHeader?: boole
 
   const vehicleOptions = vehiculos?.results?.map(v => ({
     label: `${v.placas} — ${v.marca} ${v.modelo}`,
-    value: v.id
+    value: v.id,
+    placas: String(v.placas || '').toUpperCase(),
   })) || [];
+
+  const normalizedVehicleSearch = normalizePlateSearch(createVehiculoSearch);
+  const filteredCreateVehicleOptions = normalizedVehicleSearch
+    ? vehicleOptions.filter((option) => normalizePlateSearch(option.placas).includes(normalizedVehicleSearch))
+    : vehicleOptions;
+
+  useEffect(() => {
+    if (!normalizedVehicleSearch) return;
+
+    const exactMatch = vehicleOptions.find(
+      (option) => normalizePlateSearch(option.placas) === normalizedVehicleSearch
+    );
+
+    if (exactMatch) {
+      setCreateVehiculoId(exactMatch.value);
+      return;
+    }
+
+    if (filteredCreateVehicleOptions.length === 1) {
+      setCreateVehiculoId(filteredCreateVehicleOptions[0].value);
+    }
+  }, [filteredCreateVehicleOptions, normalizedVehicleSearch, vehicleOptions]);
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
@@ -171,13 +196,13 @@ export default function OrdenesView({ hideHeader = false }: { hideHeader?: boole
 
       <div className="card bg-white/80 backdrop-blur-xl rounded-[3rem] shadow-3d border border-slate-100 overflow-hidden transition-all hover:shadow-[0_30px_60px_rgba(0,0,0,0.1)]">
         <div className="p-8 border-b border-slate-50 bg-gradient-to-r from-slate-50/50 to-transparent">
-          <div className="relative group max-w-2xl">
-            <Search className="w-6 h-6 absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+          <div className="refa-search-shell max-w-2xl">
+            <Search className="refa-search-icon" />
             <InputText 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
               placeholder="Buscar por folio o placas..." 
-              className="w-full pl-14 pr-6 py-5 rounded-[2rem] border-slate-100 bg-slate-50/30 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-bold shadow-inner"
+              className="refa-search-input rounded-[2rem] border-slate-100 bg-slate-50/30 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner"
             />
           </div>
         </div>
@@ -232,6 +257,7 @@ export default function OrdenesView({ hideHeader = false }: { hideHeader?: boole
           setShowCreate(false);
           setCreateVehiculoId(null);
           setCreatePrioridad('NORMAL');
+          setCreateVehiculoSearch('');
         }}
         className="rounded-3xl"
         baseZIndex={dialogBaseZIndex}
@@ -250,32 +276,52 @@ export default function OrdenesView({ hideHeader = false }: { hideHeader?: boole
           });
         }}>
           <div className="flex flex-col gap-2">
-            <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Vehículo *</label>
-            <Dropdown
-              value={createVehiculoId}
-              options={vehicleOptions}
-              onChange={(e) => setCreateVehiculoId(e.value)}
-              placeholder="Seleccionar vehículo…"
-              required
-              className="rounded-xl"
-              optionLabel="label"
-              optionValue="value"
-              appendTo={dropdownAppendTo}
-              panelClassName="refa-dropdown-panel"
+            <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Buscar por Placa</label>
+            <InputText
+              value={createVehiculoSearch}
+              onChange={(e) => setCreateVehiculoSearch(e.target.value.toUpperCase())}
+              className="rounded-xl uppercase"
+              placeholder="Ej. ABC1234"
             />
+            {createVehiculoSearch.trim() && (
+              <span className="text-[11px] font-medium text-slate-500">
+                {filteredCreateVehicleOptions.length
+                  ? `${filteredCreateVehicleOptions.length} vehículo(s) encontrado(s)`
+                  : 'No se encontraron vehículos con esa placa'}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Vehículo *</label>
+            <select
+              value={createVehiculoId ?? ''}
+              onChange={(e) => setCreateVehiculoId(e.target.value ? Number(e.target.value) : null)}
+              className="refa-native-select rounded-xl"
+              required
+            >
+              <option value="" disabled>
+                Seleccionar vehículo...
+              </option>
+              {filteredCreateVehicleOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="flex flex-col gap-2">
             <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Prioridad</label>
-            <Dropdown
+            <select
               value={createPrioridad}
-              options={PRIORIDADES}
-              onChange={(e) => setCreatePrioridad(e.value)}
-              className="rounded-xl"
-              optionLabel="label"
-              optionValue="value"
-              appendTo={dropdownAppendTo}
-              panelClassName="refa-dropdown-panel"
-            />
+              onChange={(e) => setCreatePrioridad(e.target.value)}
+              className="refa-native-select rounded-xl"
+            >
+              {PRIORIDADES.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="flex flex-col gap-2">
             <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Queja del Cliente *</label>
@@ -290,6 +336,7 @@ export default function OrdenesView({ hideHeader = false }: { hideHeader?: boole
                 setShowCreate(false);
                 setCreateVehiculoId(null);
                 setCreatePrioridad('NORMAL');
+                setCreateVehiculoSearch('');
               }}
               className="w-full sm:w-auto"
             />
@@ -329,18 +376,21 @@ export default function OrdenesView({ hideHeader = false }: { hideHeader?: boole
           }}>
             <div className="flex flex-col gap-2">
               <label className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">Vehículo *</label>
-              <Dropdown
-                value={editVehiculoId}
-                options={vehicleOptions}
-                onChange={(e) => setEditVehiculoId(e.value)}
-                placeholder="Seleccionar vehículo…"
+              <select
+                value={editVehiculoId ?? ''}
+                onChange={(e) => setEditVehiculoId(e.target.value ? Number(e.target.value) : null)}
+                className="refa-native-select rounded-xl"
                 required
-                className="rounded-xl"
-                optionLabel="label"
-                optionValue="value"
-                appendTo={dropdownAppendTo}
-                panelClassName="refa-dropdown-panel"
-              />
+              >
+                <option value="" disabled>
+                  Seleccionar vehículo...
+                </option>
+                {vehicleOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-4">
               <div className="flex flex-col gap-2">

@@ -14,12 +14,12 @@ import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
-import { Dropdown } from 'primereact/dropdown';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { ProgressBar } from 'primereact/progressbar';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api';
+const normalizeInventorySearch = (value: string) => value.toUpperCase().trim();
 
 async function request<T>(path: string, token: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -42,7 +42,6 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
   const qc = useQueryClient();
   const toast = useRef<Toast>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const dropdownAppendTo = typeof window === 'undefined' ? 'self' : document.body;
   const ordenId = parseInt(params.id, 10);
 
   const { data: orden, isLoading: loadingOrden } = useQuery({
@@ -69,6 +68,7 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
 
   const [tipoLinea, setTipoLinea] = useState<'SERVICIO' | 'REFACCION'>('REFACCION');
   const [selectedRefaccionId, setSelectedRefaccionId] = useState<number | null>(null);
+  const [refaccionSearch, setRefaccionSearch] = useState('');
   const [diagnostico, setDiagnostico] = useState('');
   const [savingDiag, setSavingDiag] = useState(false);
 
@@ -90,6 +90,7 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['presupuestos-orden', ordenId] });
       setSelectedRefaccionId(null);
+      setRefaccionSearch('');
       formRef.current?.reset();
       toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Concepto agregado' });
     },
@@ -136,6 +137,10 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
     value: r.id,
     disabled: Number(r.stock) <= 0,
   })) || [];
+  const normalizedRefaccionSearch = normalizeInventorySearch(refaccionSearch);
+  const filteredRefaccionOptions = normalizedRefaccionSearch
+    ? refaccionOptions.filter((option) => normalizeInventorySearch(option.label).includes(normalizedRefaccionSearch))
+    : refaccionOptions;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -294,21 +299,26 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
                 {tipoLinea === 'REFACCION' ? (
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Seleccionar Refacción del Inventario</label>
-                    <Dropdown
-                      value={selectedRefaccionId}
-                      options={refaccionOptions}
-                      onChange={(e) => setSelectedRefaccionId(e.value == null ? null : Number(e.value))}
-                      optionLabel="label"
-                      optionValue="value"
-                      optionDisabled="disabled"
+                    <InputText
+                      value={refaccionSearch}
+                      onChange={(e) => setRefaccionSearch(e.target.value.toUpperCase())}
+                      className="rounded-2xl border-slate-100 bg-slate-50/50 p-4 font-semibold shadow-inner"
                       placeholder="Buscar pieza por SKU o nombre..."
-                      filter
-                      filterBy="label"
-                      showClear
-                      appendTo={dropdownAppendTo}
-                      panelClassName="refa-dropdown-panel"
-                      className="rounded-2xl border-slate-100 bg-slate-50/50 py-1"
                     />
+                    <select
+                      value={selectedRefaccionId ?? ''}
+                      onChange={(e) => setSelectedRefaccionId(e.target.value ? Number(e.target.value) : null)}
+                      className="refa-native-select rounded-2xl border-slate-100 bg-slate-50/50"
+                    >
+                      <option value="">
+                        Seleccionar pieza...
+                      </option>
+                      {filteredRefaccionOptions.map((option) => (
+                        <option key={option.value} value={option.value} disabled={option.disabled}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -9110,12 +9110,6 @@ video {
 .left-1\/2 {
   left: 50%;
 }
-.left-4 {
-  left: 1rem;
-}
-.left-5 {
-  left: 1.25rem;
-}
 .left-\[-10\%\] {
   left: -10%;
 }
@@ -9136,9 +9130,6 @@ video {
 }
 .top-0 {
   top: 0px;
-}
-.top-1\/2 {
-  top: 50%;
 }
 .top-1\/3 {
   top: 33.333333%;
@@ -9404,10 +9395,6 @@ video {
 }
 .-translate-x-1\/2 {
   --tw-translate-x: -50%;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-.-translate-y-1\/2 {
-  --tw-translate-y: -50%;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 .translate-x-12 {
@@ -9977,18 +9964,6 @@ video {
 }
 .pb-6 {
   padding-bottom: 1.5rem;
-}
-.pl-12 {
-  padding-left: 3rem;
-}
-.pl-14 {
-  padding-left: 3.5rem;
-}
-.pr-4 {
-  padding-right: 1rem;
-}
-.pr-6 {
-  padding-right: 1.5rem;
 }
 .pt-10 {
   padding-top: 2.5rem;
@@ -10649,6 +10624,23 @@ body {
   font-family: var(--font-sans), sans-serif;
 }
 
+.card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(10, 16, 32, 0.94) 0%, rgba(6, 11, 23, 0.96) 100%) !important;
+  border: 1px solid rgba(148, 163, 184, 0.14) !important;
+  box-shadow: 0 34px 90px -42px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(20px);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 18%);
+  pointer-events: none;
+}
+
 .p-card {
   background: rgba(15, 23, 42, 0.84) !important;
   border: 1px solid var(--border-color) !important;
@@ -10814,6 +10806,48 @@ body {
   color: var(--text-strong);
 }
 
+.refa-search-shell {
+  position: relative;
+}
+
+.refa-search-icon {
+  position: absolute;
+  left: 1.1rem;
+  top: 50%;
+  width: 1.05rem;
+  height: 1.05rem;
+  transform: translateY(-50%);
+  color: rgba(148, 163, 184, 0.78);
+  pointer-events: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.refa-search-shell:focus-within .refa-search-icon {
+  color: #60a5fa;
+  transform: translateY(-50%) scale(1.02);
+}
+
+.refa-search-input {
+  width: 100%;
+  min-height: 3.4rem;
+  padding-left: 3.2rem !important;
+  padding-right: 1.15rem !important;
+  font-size: 0.94rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em;
+  line-height: 1.25 !important;
+}
+
+.refa-search-input::-moz-placeholder {
+  color: rgba(148, 163, 184, 0.64) !important;
+  font-weight: 500 !important;
+}
+
+.refa-search-input::placeholder {
+  color: rgba(148, 163, 184, 0.64) !important;
+  font-weight: 500 !important;
+}
+
 .p-button {
   border: none !important;
   border-radius: 1.5rem !important;
@@ -10883,11 +10917,13 @@ body {
 
 .p-tag {
   border-radius: 999px !important;
-  padding: 0.45rem 0.8rem !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.08em;
+  padding: 0.42rem 0.78rem !important;
+  font-weight: 900 !important;
+  font-size: 0.66rem !important;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .p-tag.p-tag-success {
@@ -11044,6 +11080,19 @@ body {
     font-size: 0.95rem !important;
   }
 
+  .refa-search-icon {
+    left: 0.95rem;
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .refa-search-input {
+    min-height: 3.05rem;
+    padding-left: 2.8rem !important;
+    padding-right: 0.95rem !important;
+    font-size: 0.9rem !important;
+  }
+
   .p-dropdown .p-dropdown-trigger {
     width: 2.9rem !important;
   }
@@ -11080,13 +11129,19 @@ body {
   border-radius: 0 !important;
 }
 
+.p-datatable.p-datatable-modern .p-sortable-column .p-sortable-column-icon {
+  color: rgba(148, 163, 184, 0.55) !important;
+  font-size: 0.72rem !important;
+  margin-left: 0.45rem;
+}
+
 .p-datatable.p-datatable-modern .p-datatable-thead > tr > th {
-  background: rgba(15, 23, 42, 0.7) !important;
-  color: var(--text-muted) !important;
-  font-size: 0.7rem !important;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.82) 0%, rgba(10, 16, 32, 0.88) 100%) !important;
+  color: rgba(148, 163, 184, 0.88) !important;
+  font-size: 0.68rem !important;
   font-weight: 900 !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.16em !important;
+  letter-spacing: 0.18em !important;
   border: none !important;
   border-bottom: 1px solid var(--border-color) !important;
   padding: 1.4rem 1.5rem !important;
@@ -11094,19 +11149,20 @@ body {
 
 .p-datatable.p-datatable-modern .p-datatable-tbody > tr {
   background: transparent !important;
-  transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease !important;
+  transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease !important;
 }
 
 .p-datatable.p-datatable-modern .p-datatable-tbody > tr > td {
   background: transparent !important;
   border-color: rgba(148, 163, 184, 0.1) !important;
   padding: 1.35rem 1.5rem !important;
+  vertical-align: middle !important;
 }
 
 .p-datatable.p-datatable-modern .p-datatable-tbody > tr:hover {
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0.03) 100%) !important;
   transform: translateY(-1px);
-  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.12), 0 18px 34px -30px rgba(15, 23, 42, 0.9);
   position: relative;
   z-index: 2;
 }
@@ -11414,12 +11470,6 @@ body {
   --tw-scale-x: 0.99;
   --tw-scale-y: 0.99;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-
-.group:focus-within .group-focus-within\:text-blue-600 {
-  --tw-text-opacity: 1;
-  color: rgb(30 115 190 / var(--tw-text-opacity, 1));
-    color: #60a5fa !important;
 }
 
 .group:hover .group-hover\:translate-x-1 {
