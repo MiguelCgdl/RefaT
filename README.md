@@ -324,6 +324,45 @@ The repository includes GitHub Actions workflows for continuous integration and 
 - **CI workflow (`.github/workflows/ci.yml`)** runs linting, matrix testing on Node 18 & 20, builds Docker images, pushes them to Docker Hub, and uploads test artifacts.
 - **Deploy workflow (`.github/workflows/deploy.yml`)** triggers after a successful Docker push, logs in via SSH, pulls the new images and restarts services using `docker-compose`.
 
+## CI/CD Overview
+
+### Diagram Overview
+```mermaid
+flowchart TD
+    A[Push to main] --> B[CI Workflow]
+    B --> C{Jobs}
+    C -->|lint| D[Lint]
+    C -->|test| E[Tests]
+    C -->|docker-build| F[Docker Build & Push]
+    F --> G[Docker Hub]
+    D --> G
+    E --> G
+    G --> H[Deploy Workflow]
+    H --> I[SSH to Server]
+    I --> J[Pull Images]
+    J --> K[Docker Compose Up]
+    K --> L[Running Application]
+```
+
+### Architecture Diagram
+```mermaid
+graph LR
+    subgraph CI
+        CI1[Lint] --> CI2[Test]
+        CI2 --> CI3[Docker Build]
+        CI3 --> CI4[Push to Docker Hub]
+    end
+    subgraph CD
+        CD1[SSH Agent] --> CD2[Pull Images]
+        CD2 --> CD3[Docker Compose]
+    end
+    CI4 --> CD1
+    classDef ci fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef cd fill:#bbf,stroke:#333,stroke-width:2px;
+    class CI1,CI2,CI3,CI4 ci;
+    class CD1,CD2,CD3 cd;
+```
+
 Ensure the following secrets are configured in the repository settings:
 
 | Secret | Description |
