@@ -2,10 +2,10 @@
   "name": "refa-root",
   "private": true,
   "scripts": {
-    "install:all": "npm install --prefix backend-nest && npm install --prefix frontend-next",
+    "install:all": "npm install && npm install --prefix backend-nest && npm install --prefix frontend-next",
     "dev:api": "npm run start:dev --prefix backend-nest",
     "dev:web": "npm run dev --prefix frontend-next",
-    "dev": "npx concurrently -k \"npm run dev:api\" \"npm run dev:web\"",
+    "dev": "concurrently -k \"npm run dev:api\" \"npm run dev:web\"",
     "build": "npm run build --prefix backend-nest && npm run build --prefix frontend-next",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down",
