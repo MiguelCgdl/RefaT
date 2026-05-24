@@ -317,8 +317,19 @@ Las credenciales concretas dependen de las variables de entorno configuradas, es
 - [FUNCIONALIDADES.md](FUNCIONALIDADES.md)
 - [backend/DEPRECATED.md](backend/DEPRECATED.md)
 
-## Notas
+## CI/CD Pipeline
 
-- El frontend legacy y el backend legacy siguen presentes solo como referencia o migración.
-- La base activa del sistema hoy está en `frontend-next/` y `backend-nest/`.
-- Si el proyecto va a producción, se recomienda añadir HTTPS real, rotación de secretos, observabilidad y pipeline de despliegue.
+The repository includes GitHub Actions workflows for continuous integration and deployment.
+
+- **CI workflow (`.github/workflows/ci.yml`)** runs linting, matrix testing on Node 18 & 20, builds Docker images, pushes them to Docker Hub, and uploads test artifacts.
+- **Deploy workflow (`.github/workflows/deploy.yml`)** triggers after a successful Docker push, logs in via SSH, pulls the new images and restarts services using `docker-compose`.
+
+Ensure the following secrets are configured in the repository settings:
+
+| Secret | Description |
+|--------|-------------|
+| `DOCKERHUB_USERNAME` | Docker Hub account username |
+| `DOCKERHUB_TOKEN` | Docker Hub access token |
+| `SSH_PRIVATE_KEY` | SSH private key for the deployment server |
+| `SSH_HOST` (optional) | Hostname or IP of the server |
+| `SSH_USER` (optional) | SSH user (defaults to `user`) |
