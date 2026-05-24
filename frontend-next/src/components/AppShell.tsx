@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.24),_transparent_70%)] pointer-events-none" />
         <div className="flex min-h-[5.5rem] items-center border-b border-white/10 px-4 py-4 sm:px-6 lg:h-28 lg:px-8">
           <h1 className="flex items-center gap-3 text-xl font-black tracking-tighter text-white">
-            <img src="/logo.svg" alt="NorthLub Logo" className="h-8 mr-2" />
+            <img src="/logo.png" alt="NorthLub Logo" className="h-8 mr-2" />
             <div className="flex flex-col leading-none">
               <span className="text-2xl tracking-tight">REFA<span className="text-blue-400 font-extrabold"> PRO</span></span>
               <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Panel Operativo</span>

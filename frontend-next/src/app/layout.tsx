@@ -23,6 +23,9 @@ const monoFont = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'Refa — Control vehicular',
   description: 'Taller y refaccionaria',
+  icons: {
+    icon: '/favicon.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
