@@ -12,7 +12,7 @@
     "@hookform/resolvers": "^3.9.1",
     "@tanstack/react-query": "^5.62.8",
     "lucide-react": "^0.378.0",
-    "next": "^14.2.21",
+    "next": "^14.2.35",
     "primeicons": "^7.0.0",
     "primereact": "^10.9.8",
     "react": "^18.3.1",
