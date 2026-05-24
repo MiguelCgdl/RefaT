@@ -13,14 +13,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private prisma: PrismaService,
   ) {
     const jwtSecret = config.get<string>('JWT_SECRET');
-    if (!jwtSecret) {
+    const nodeEnv = config.get<string>('NODE_ENV') ?? process.env.NODE_ENV;
+    const isProduction = nodeEnv === 'production';
+    const secret = jwtSecret ?? (isProduction ? null : 'dev-jwt-secret');
+
+    if (!secret) {
       throw new Error('JWT_SECRET environment variable must be set');
     }
     
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: jwtSecret,
+      secretOrKey: secret,
     });
   }
 

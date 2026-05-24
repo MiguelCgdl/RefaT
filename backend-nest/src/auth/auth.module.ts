@@ -14,12 +14,16 @@ import { JwtStrategy } from './jwt.strategy';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const jwtSecret = config.get<string>('JWT_SECRET');
-        if (!jwtSecret) {
+        const nodeEnv = config.get<string>('NODE_ENV') ?? process.env.NODE_ENV;
+        const isProduction = nodeEnv === 'production';
+        const secret = jwtSecret ?? (isProduction ? null : 'dev-jwt-secret');
+
+        if (!secret) {
           throw new Error('JWT_SECRET environment variable must be set');
         }
         
         return {
-          secret: jwtSecret,
+          secret,
           signOptions: { expiresIn: config.get<string>('JWT_EXPIRES_IN', '8h') },
         };
       },
