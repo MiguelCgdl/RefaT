@@ -38,7 +38,7 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-900">
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-slate-900 via-gray-800 to-slate-900">
       <form onSubmit={onSubmit} className="space-y-5 w-full max-w-md p-6 bg-gray-800/50 rounded-xl backdrop-blur-lg shadow-lg">
         <div className="space-y-2.5">
           <label className="ml-1 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.24em] text-slate-300">
