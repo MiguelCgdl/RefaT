@@ -352,7 +352,10 @@ export default function ClientesVehiculosPage() {
                     observaciones: fd.get('observaciones'),
                   };
 
-                  if (!dataSubmit.marca || !dataSubmit.modelo || !colorFinal) {
+                  const anioVal = Number(fd.get('anio'));
+                  const placasVal = String(fd.get('placas') || '').trim().toUpperCase();
+
+                  if (!selectedMarca || !selectedModelo || !colorFinal) {
                     toast.current?.show({
                       severity: 'warn',
                       summary: 'Datos incompletos',
@@ -361,10 +364,38 @@ export default function ClientesVehiculosPage() {
                     return;
                   }
 
+                  if (isNaN(anioVal) || anioVal < 1900 || anioVal > 2100) {
+                    toast.current?.show({
+                      severity: 'warn',
+                      summary: 'Año inválido',
+                      detail: 'El año del vehículo debe estar entre 1900 y 2100.',
+                    });
+                    return;
+                  }
+
+                  if (!placasVal) {
+                    toast.current?.show({
+                      severity: 'warn',
+                      summary: 'Placas requeridas',
+                      detail: 'Por favor ingresa las placas del vehículo.',
+                    });
+                    return;
+                  }
+
+                  const whitelistedData = {
+                    marca: selectedMarca,
+                    modelo: selectedModelo,
+                    anio: anioVal,
+                    placas: placasVal,
+                    color: colorFinal,
+                    kilometrajeActual: fd.get('kilometrajeActual') ? Number(fd.get('kilometrajeActual')) : undefined,
+                    notas: String(fd.get('observaciones') || '').trim(),
+                  };
+
                   if (editVehiculo) {
-                    updateVehiculoMutation.mutate({ id: editVehiculo.id, data: dataSubmit });
+                    updateVehiculoMutation.mutate({ id: editVehiculo.id, data: whitelistedData });
                   } else {
-                    createVehiculoMutation.mutate({ ...dataSubmit, clienteId: data.id });
+                    createVehiculoMutation.mutate({ ...whitelistedData, clienteId: data.id });
                   }
                 }}
               >
@@ -637,10 +668,14 @@ export default function ClientesVehiculosPage() {
         <form className="grid grid-cols-1 gap-6 pt-2" onSubmit={(e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
-          const data = Object.fromEntries(fd);
-          if (typeof data.rfc === 'string') {
-            data.rfc = normalizeText(data.rfc);
+          const rawData = Object.fromEntries(fd);
+          if (typeof rawData.rfc === 'string') {
+            rawData.rfc = normalizeText(rawData.rfc);
           }
+          
+          // Omitir el campo 'ciudad' ya que no forma parte del esquema DTO ni de la base de datos
+          const { ciudad, ...data } = rawData;
+
           if (editCliente) updateClienteMutation.mutate({ id: editCliente.id, data });
           else createClienteMutation.mutate(data);
         }}>

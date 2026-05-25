@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsOptional, IsString, MaxLength, ValidateNested, IsInt, Min, Max } from 'class-validator';
+import { IsBoolean, IsEmail, IsOptional, IsString, MaxLength, ValidateNested, IsInt, Min, Max, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class VehiculoNestedDto {
@@ -44,6 +44,7 @@ export class CreateClienteDto {
   nombre!: string;
 
   @IsOptional()
+  @ValidateIf((o, v) => v !== '')
   @IsEmail()
   email?: string;
 

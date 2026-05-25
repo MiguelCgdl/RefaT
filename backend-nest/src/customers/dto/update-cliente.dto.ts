@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsOptional, IsString, MaxLength, ValidateIf } from 'class-validator';
 
 export class UpdateClienteDto {
   @IsOptional()
@@ -7,6 +7,7 @@ export class UpdateClienteDto {
   nombre?: string;
 
   @IsOptional()
+  @ValidateIf((o, v) => v !== '')
   @IsEmail()
   email?: string;
 
