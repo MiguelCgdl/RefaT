@@ -12,6 +12,7 @@ export interface Cliente {
   telefono: string;
   rfc: string;
   direccion: string;
+  ciudad?: string; // nuevo campo
   notas: string;
   activo: boolean;
 }
@@ -27,6 +28,24 @@ export interface Vehiculo {
   placas: string;
   color: string;
   kilometraje_actual: number;
+  // Campos de inventario y extras
+  tipo_motor?: string; // cilindraje
+  unidad_luces?: boolean;
+  cuarto_luces?: boolean;
+  antena?: boolean;
+  espejo_lateral?: boolean;
+  cristales?: boolean;
+  emblema?: boolean;
+  rines?: number; // número de rines (4 típico)
+  tapon_gasolina?: boolean;
+  carroceria_sin_golpes?: boolean;
+  gato?: boolean;
+  bocina_claxon?: boolean;
+  limpiaparabrisas?: boolean;
+  llave_rueda?: boolean;
+  llanta_repuesto?: boolean;
+  gasolina_aprox?: number; // nivel de gasolina aproximado
+  observaciones?: string;
 }
 
 export interface OrdenTrabajo {

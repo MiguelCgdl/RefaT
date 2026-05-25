@@ -1,7 +1,7 @@
 // Server component
 export const metadata = {
   title: 'North Lub',
-  icons: { icon: '/favicon.png' },
+  icons: { icon: '/images/logo.png' },
 };
 
 import LoginForm from './LoginForm';
@@ -19,7 +19,7 @@ export default function LoginPage() {
       <div className="relative w-full max-w-[31rem] animate-in space-y-7 fade-in slide-in-from-bottom-8 duration-700">
         <div className="text-center space-y-4">
           <div className="flex justify-center">
-            <img src="/logo.png" alt="North Lub logo" className="h-20 w-auto" />
+            <img src="/images/logo.png" alt="North Lub logo" className="h-20 w-auto" />
           </div>
           <div className="space-y-2">
             <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl">

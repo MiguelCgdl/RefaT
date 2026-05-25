@@ -9,6 +9,7 @@ import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
+import { InputNumber } from 'primereact/inputnumber';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
@@ -434,7 +435,11 @@ export default function ClientesVehiculosPage() {
             <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Dirección</label>
             <InputText name="direccion" defaultValue={editCliente?.direccion} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-blue-500/20 transition-all py-4" />
           </div>
-          <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-slate-100">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Ciudad</label>
+            <InputText name="ciudad" defaultValue={editCliente?.ciudad} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-blue-500/20 transition-all py-4" />
+          </div>
+      <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-slate-100">
             <Button label="Cancelar" type="button" text className="font-bold rounded-2xl px-8 py-3 hover:bg-slate-100 transition-all" onClick={() => { setShowCreateCliente(false); setEditCliente(null); }} />
             <Button label={editCliente ? "Actualizar" : "Guardar"} type="submit" loading={createClienteMutation.isPending || updateClienteMutation.isPending} className="font-black rounded-2xl px-10 py-3 shadow-3d shadow-blue-600/30 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-none transition-all active:scale-95" />
           </div>
@@ -444,11 +449,11 @@ export default function ClientesVehiculosPage() {
       <Dialog 
         header={editVehiculo ? "Editar Vehículo" : "Nuevo Vehículo"} 
         visible={showCreateVehiculo !== null || !!editVehiculo} 
-        style={{ width: '450px' }} 
+        style={{ width: '450px', maxHeight: '90vh' }} 
         onHide={() => { setShowCreateVehiculo(null); setEditVehiculo(null); }}
         className="rounded-[3rem] shadow-3d border border-slate-200 overflow-hidden"
         headerClassName="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-8 border-b border-emerald-800/30"
-        contentClassName="bg-gradient-to-b from-white to-slate-50/80 p-8"
+        contentClassName="bg-gradient-to-b from-white to-slate-50/80 p-8 overflow-y-auto"
         baseZIndex={dialogBaseZIndex}
       >
         <form className="grid grid-cols-1 gap-6 pt-2" onSubmit={(e) => {
@@ -462,6 +467,24 @@ export default function ClientesVehiculosPage() {
             placas: String(fd.get('placas') || '').toUpperCase(),
             color: colorFinal,
             kilometrajeActual: fd.get('kilometrajeActual') ? Number(fd.get('kilometrajeActual')) : '',
+            tipo_motor: fd.get('tipo_motor'),
+            kilometraje_actual: Number(fd.get('kilometraje_actual')),
+            unidad_luces: (e.currentTarget.elements.namedItem('unidad_luces') as HTMLInputElement).checked,
+            cuarto_luces: (e.currentTarget.elements.namedItem('cuarto_luces') as HTMLInputElement).checked,
+            antena: (e.currentTarget.elements.namedItem('antena') as HTMLInputElement).checked,
+            espejo_lateral: (e.currentTarget.elements.namedItem('espejo_lateral') as HTMLInputElement).checked,
+            cristales: (e.currentTarget.elements.namedItem('cristales') as HTMLInputElement).checked,
+            emblema: (e.currentTarget.elements.namedItem('emblema') as HTMLInputElement).checked,
+            rines: Number(fd.get('rines')),
+            tapon_gasolina: (e.currentTarget.elements.namedItem('tapon_gasolina') as HTMLInputElement).checked,
+            carroceria_sin_golpes: (e.currentTarget.elements.namedItem('carroceria_sin_golpes') as HTMLInputElement).checked,
+            gato: (e.currentTarget.elements.namedItem('gato') as HTMLInputElement).checked,
+            bocina_claxon: (e.currentTarget.elements.namedItem('bocina_claxon') as HTMLInputElement).checked,
+            limpiaparabrisas: (e.currentTarget.elements.namedItem('limpiaparabrisas') as HTMLInputElement).checked,
+            llave_rueda: (e.currentTarget.elements.namedItem('llave_rueda') as HTMLInputElement).checked,
+            llanta_repuesto: (e.currentTarget.elements.namedItem('llanta_repuesto') as HTMLInputElement).checked,
+            gasolina_aprox: Number(fd.get('gasolina_aprox')),
+            observaciones: fd.get('observaciones'),
           };
 
           if (!data.marca || !data.modelo || !colorFinal) {
@@ -476,101 +499,166 @@ export default function ClientesVehiculosPage() {
           if (editVehiculo) updateVehiculoMutation.mutate({ id: editVehiculo.id, data });
           else createVehiculoMutation.mutate({ ...data, clienteId: showCreateVehiculo });
         }}>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Marca *</label>
-              <select
-                value={selectedMarca}
-                onChange={(e) => {
-                  setSelectedMarca(e.target.value);
-                  setSelectedModelo('');
-                }}
-                className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
-              >
-                <option value="" disabled>
-                  Seleccionar marca...
-                </option>
-                {mergedMarcaOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Modelo *</label>
-              <select
-                value={selectedModelo}
-                onChange={(e) => setSelectedModelo(e.target.value)}
-                disabled={!selectedMarca}
-                className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
-              >
-                <option value="" disabled>
-                  {selectedMarca ? 'Seleccionar modelo...' : 'Primero selecciona una marca'}
-                </option>
-                {modelOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Marca *</label>
+            <select
+              value={selectedMarca}
+              onChange={(e) => {
+                setSelectedMarca(e.target.value);
+                setSelectedModelo('');
+              }}
+              className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
+            >
+              <option value="" disabled>Seleccionar marca...</option>
+              {mergedMarcaOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
           </div>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Año *</label>
-              <InputText name="anio" type="number" defaultValue={editVehiculo?.anio?.toString()} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Placas *</label>
-              <InputText name="placas" defaultValue={editVehiculo?.placas} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4 uppercase" />
-            </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Modelo *</label>
+            <select
+              value={selectedModelo}
+              onChange={(e) => setSelectedModelo(e.target.value)}
+              disabled={!selectedMarca}
+              className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
+            >
+              <option value="" disabled>{selectedMarca ? 'Seleccionar modelo...' : 'Primero selecciona una marca'}</option>
+              {modelOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
           </div>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Color</label>
-              <select
-                value={selectedColor}
-                onChange={(e) => {
-                  setSelectedColor(e.target.value);
-                  if (e.target.value !== 'Otro') {
-                    setCustomColor('');
-                  }
-                }}
-                className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
-              >
-                <option value="" disabled>
-                  Seleccionar color...
-                </option>
-                {colorOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Kilometraje</label>
-              <InputText name="kilometrajeActual" type="number" defaultValue={editVehiculo?.kilometraje_actual?.toString()} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
-            </div>
+        </div>
+        <div className="grid grid-cols-2 gap-6 mt-4">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Año *</label>
+            <InputText name="anio" type="number" defaultValue={editVehiculo?.anio?.toString()} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
           </div>
-          {selectedColor === 'Otro' && (
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Especificar Color *</label>
-              <InputText
-                value={customColor}
-                onChange={(e) => setCustomColor(e.target.value)}
-                className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4"
-                placeholder="Ej. Azul eléctrico tricapa"
-              />
-            </div>
-          )}
-          <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-slate-100">
-            <Button label="Cancelar" type="button" text className="font-bold rounded-2xl px-8 py-3 hover:bg-slate-100 transition-all" onClick={() => { setShowCreateVehiculo(null); setEditVehiculo(null); setSelectedMarca(''); setSelectedModelo(''); setSelectedColor(''); setCustomColor(''); }} />
-            <Button label={editVehiculo ? "Actualizar" : "Guardar"} type="submit" loading={createVehiculoMutation.isPending || updateVehiculoMutation.isPending} className="font-black rounded-2xl px-10 py-3 shadow-3d shadow-emerald-600/30 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 border-none transition-all active:scale-95" />
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Placas *</label>
+            <InputText name="placas" defaultValue={editVehiculo?.placas} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4 uppercase" />
           </div>
-        </form>
-      </Dialog>
+        </div>
+        <div className="grid grid-cols-2 gap-6 mt-4">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Color</label>
+            <select
+              value={selectedColor}
+              onChange={(e) => {
+                setSelectedColor(e.target.value);
+                if (e.target.value !== 'Otro') {
+                  setCustomColor('');
+                }
+              }}
+              className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
+            >
+              <option value="" disabled>Seleccionar color...</option>
+              {colorOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Kilometraje</label>
+            <InputText name="kilometrajeActual" type="number" defaultValue={editVehiculo?.kilometraje_actual?.toString()} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
+          </div>
+        </div>
+        {selectedColor === 'Otro' && (
+          <div className="flex flex-col gap-2 mt-4">
+            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Especificar Color *</label>
+            <InputText value={customColor} onChange={(e) => setCustomColor(e.target.value)} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" placeholder="Ej. Azul eléctrico tricapa" />
+          </div>
+        )}
+        <div className="grid grid-cols-2 gap-6 mt-4">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Tipo Motor (cil)</label>
+            <InputText name="tipo_motor" defaultValue={(editVehiculo as any)?.tipo_motor} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Kilómetros Recorridos</label>
+            <InputNumber name="kilometraje_actual" value={(editVehiculo as any)?.kilometraje_actual} mode="decimal" className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+          <div className="flex items-center">
+            <input type="checkbox" id="unidad_luces" name="unidad_luces" defaultChecked={(editVehiculo as any)?.unidad_luces} className="mr-2" />
+            <label htmlFor="unidad_luces" className="text-xs font-medium">Unidad de Luces</label>
+          </div>
+          <div className="flex items-center">
+            <input type="checkbox" id="cuarto_luces" name="cuarto_luces" defaultChecked={(editVehiculo as any)?.cuarto_luces} className="mr-2" />
+            <label htmlFor="cuarto_luces" className="text-xs font-medium">1/4 de Luces</label>
+          </div>
+          <div className="flex items-center">
+            <input type="checkbox" id="antena" name="antena" defaultChecked={(editVehiculo as any)?.antena} className="mr-2" />
+            <label htmlFor="antena" className="text-xs font-medium">Antena</label>
+          </div>
+          <div className="flex items-center">
+            <input type="checkbox" id="espejo_lateral" name="espejo_lateral" defaultChecked={(editVehiculo as any)?.espejo_lateral} className="mr-2" />
+            <label htmlFor="espejo_lateral" className="text-xs font-medium">Espejo Lateral</label>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+          <div className="flex items-center">
+            <input type="checkbox" id="cristales" name="cristales" defaultChecked={(editVehiculo as any)?.cristales} className="mr-2" />
+            <label htmlFor="cristales" className="text-xs font-medium">Cristales</label>
+          </div>
+          <div className="flex items-center">
+            <input type="checkbox" id="emblema" name="emblema" defaultChecked={(editVehiculo as any)?.emblema} className="mr-2" />
+            <label htmlFor="emblema" className="text-xs font-medium">Emblema</label>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-xs font-medium">Rines</label>
+            <InputNumber name="rines" value={(editVehiculo as any)?.rines || 4} mode="decimal" className="rounded-2xl border-slate-200 bg-white/80" />
+          </div>
+          <div className="flex items-center">
+            <input type="checkbox" id="tapon_gasolina" name="tapon_gasolina" defaultChecked={(editVehiculo as any)?.tapon_gasolina} className="mr-2" />
+            <label htmlFor="tapon_gasolina" className="text-xs font-medium">Tapón de Gasolina</label>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+          <div className="flex items-center">
+            <input type="checkbox" id="carroceria_sin_golpes" name="carroceria_sin_golpes" defaultChecked={(editVehiculo as any)?.carroceria_sin_golpes} className="mr-2" />
+            <label htmlFor="carroceria_sin_golpes" className="text-xs font-medium">Carrocería sin Golpes</label>
+          </div>
+          <div className="flex items-center">
+            <input type="checkbox" id="gato" name="gato" defaultChecked={(editVehiculo as any)?.gato} className="mr-2" />
+            <label htmlFor="gato" className="text-xs font-medium">Gato</label>
+          </div>
+          <div className="flex items-center">
+            <input type="checkbox" id="bocina_claxon" name="bocina_claxon" defaultChecked={(editVehiculo as any)?.bocina_claxon} className="mr-2" />
+            <label htmlFor="bocina_claxon" className="text-xs font-medium">Bocina/Claxon</label>
+          </div>
+          <div className="flex items-center">
+            <input type="checkbox" id="limpiaparabrisas" name="limpiaparabrisas" defaultChecked={(editVehiculo as any)?.limpiaparabrisas} className="mr-2" />
+            <label htmlFor="limpiaparabrisas" className="text-xs font-medium">Limpiaparabrisas</label>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+          <div className="flex items-center">
+            <input type="checkbox" id="llave_rueda" name="llave_rueda" defaultChecked={(editVehiculo as any)?.llave_rueda} className="mr-2" />
+            <label htmlFor="llave_rueda" className="text-xs font-medium">Llave de Rueda</label>
+          </div>
+          <div className="flex items-center">
+            <input type="checkbox" id="llanta_repuesto" name="llanta_repuesto" defaultChecked={(editVehiculo as any)?.llanta_repuesto} className="mr-2" />
+            <label htmlFor="llanta_repuesto" className="text-xs font-medium">Llanta de Repuesto</label>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-xs font-medium">Gasolina Aproximada (%)</label>
+            <InputNumber name="gasolina_aprox" value={(editVehiculo as any)?.gasolina_aprox} mode="decimal" min={0} max={100} className="rounded-2xl border-slate-200 bg-white/80" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-xs font-medium">Observaciones</label>
+            <textarea name="observaciones" defaultValue={(editVehiculo as any)?.observaciones} className="rounded-2xl border-slate-200 bg-white/80 p-2" rows={3} />
+          </div>
+        </div>
+        <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-slate-100">
+          <Button label="Cancelar" type="button" text className="font-bold rounded-2xl px-8 py-3 hover:bg-slate-100 transition-all" onClick={() => { setShowCreateVehiculo(null); setEditVehiculo(null); setSelectedMarca(''); setSelectedModelo(''); setSelectedColor(''); setCustomColor(''); }} />
+          <Button label={editVehiculo ? "Actualizar" : "Guardar"} type="submit" loading={createVehiculoMutation.isPending || updateVehiculoMutation.isPending} className="font-black rounded-2xl px-10 py-3 shadow-3d shadow-emerald-600/30 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 border-none transition-all active:scale-95" />
+        </div>
+      </form>
+    </Dialog>
 
       {/* Historial Modal */}
       <Dialog 

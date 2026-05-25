@@ -78,8 +78,7 @@ export default function LoginForm() {
           loading={loading}
           className="mt-3 w-full rounded-full border-none bg-blue-600 py-4 text-lg font-bold text-white shadow-[0_20px_45px_-18px_rgba(37,99,235,0.9)] transition-all hover:scale-[1.01] hover:bg-blue-500 hover:shadow-[0_28px_56px_-18px_rgba(37,99,235,0.95)] active:scale-[0.99]"
         />
-        <p className="text-center text-xs font-medium leading-5 text-slate-500">
-          Acceso restringido a personal autorizado del taller.
+        
         </p>
       </form>
     </>
