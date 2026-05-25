@@ -16,7 +16,7 @@ export default function LoginPage() {
         <div className="absolute right-[-4rem] top-1/3 h-56 w-56 rounded-full bg-cyan-400/10 blur-3xl" />
       </div>
 
-      <div className="relative w-full max-w-[31rem] animate-in space-y-7 fade-in slide-in-from-bottom-8 duration-700">
+      <div className="relative w-full max-w-md mx-auto px-4 animate-in space-y-7 fade-in slide-in-from-bottom-8 duration-700">
         <div className="text-center space-y-4">
           <div className="flex justify-center">
             <img src="/images/logo.png" alt="North Lub logo" className="h-20 w-auto" />
