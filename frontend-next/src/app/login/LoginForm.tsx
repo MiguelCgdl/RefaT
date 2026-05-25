@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { InputText } from 'primereact/inputtext';
 import { Password } from 'primereact/password';
 import { Button } from 'primereact/button';
+import { InputNumber } from 'primereact/inputnumber';
 import { Message } from 'primereact/message';
 import { Lock, User } from 'lucide-react';
 

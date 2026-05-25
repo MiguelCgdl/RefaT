@@ -447,15 +447,15 @@ export default function ClientesVehiculosPage() {
       </Dialog>
 
       <Dialog 
-        header={editVehiculo ? "Editar Vehículo" : "Nuevo Vehículo"} 
-        visible={showCreateVehiculo !== null || !!editVehiculo} 
-        style={{ width: '450px', maxHeight: '90vh' }} 
-        onHide={() => { setShowCreateVehiculo(null); setEditVehiculo(null); }}
-        className="rounded-[3rem] shadow-3d border border-slate-200 overflow-hidden"
-        headerClassName="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-8 border-b border-emerald-800/30"
-        contentClassName="bg-gradient-to-b from-white to-slate-50/80 p-8 overflow-y-auto"
-        baseZIndex={dialogBaseZIndex}
-      >
+          header={editVehiculo ? "Editar Vehículo" : "Nuevo Vehículo"} 
+          visible={showCreateVehiculo !== null || !!editVehiculo} 
+          style={{ width: '100%', maxWidth: '540px' }} 
+          onHide={() => { setShowCreateVehiculo(null); setEditVehiculo(null); }}
+          className="rounded-[3rem] shadow-3d border border-slate-200 overflow-hidden"
+          headerClassName="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-8 border-b border-emerald-800/30"
+          contentClassName="bg-gradient-to-b from-white to-slate-50/80 p-8 overflow-y-auto max-h-[80vh]"
+          baseZIndex={dialogBaseZIndex}
+        >
         <form className="grid grid-cols-1 gap-6 pt-2" onSubmit={(e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
