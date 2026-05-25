@@ -21,7 +21,7 @@ const monoFont = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Refa — Control vehicular',
+  title: 'North Lub — Control vehicular',
   description: 'Taller y refaccionaria',
   icons: {
     icon: '/favicon.png',

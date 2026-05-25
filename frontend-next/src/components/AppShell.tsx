@@ -49,7 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <h1 className="flex items-center gap-3 text-xl font-black tracking-tighter text-white">
             <img src="/logo.png" alt="NorthLub Logo" className="h-8 mr-2" />
             <div className="flex flex-col leading-none">
-              <span className="text-2xl tracking-tight">REFA<span className="text-blue-400 font-extrabold"> PRO</span></span>
+              <span className="text-2xl tracking-tight">North<span className="text-blue-400 font-extrabold"> Lub</span></span>
               <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Panel Operativo</span>
             </div>
           </h1>
