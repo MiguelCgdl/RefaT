@@ -12,6 +12,9 @@ media/
 # Node
 node_modules/
 dist/
+.next/
+out/
+build/
 *.local
 
 # IDE

@@ -658,7 +658,9 @@ export default function ClientesVehiculosPage() {
           <Button label={editVehiculo ? "Actualizar" : "Guardar"} type="submit" loading={createVehiculoMutation.isPending || updateVehiculoMutation.isPending} className="font-black rounded-2xl px-10 py-3 shadow-3d shadow-emerald-600/30 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 border-none transition-all active:scale-95" />
         </div>
       </form>
-    </Dialog>
+</Dialog>
+        
+    
 
       {/* Historial Modal */}
       <Dialog 
