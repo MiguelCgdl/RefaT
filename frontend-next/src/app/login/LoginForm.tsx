@@ -37,8 +37,8 @@ export default function LoginForm() {
   }
 
   return (
-    <>
-      <form onSubmit={onSubmit} className="space-y-5">
+    <div className="flex justify-center items-center min-h-screen bg-gray-900">
+      <form onSubmit={onSubmit} className="space-y-5 w-full max-w-md p-6 bg-gray-800/50 rounded-xl backdrop-blur-lg shadow-lg">
         <div className="space-y-2.5">
           <label className="ml-1 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.24em] text-slate-300">
             <User className="h-4 w-4 text-slate-400" />
@@ -64,7 +64,7 @@ export default function LoginForm() {
             autoComplete="current-password"
             toggleMask
             feedback={false}
-            className="w-full [&_ .p-icon-field]:w-full [&_ .p-input-icon]:right-4 [&_ .p-input-icon]:text-slate-400 [&_ .p-input-icon]:transition-colors [&_ .p-inputtext]:w-full [&_ .p-inputtext]:rounded-[1.9rem] [&_ .p-inputtext]:border [&_ .p-inputtext]:border-white/10 [&_ .p-inputtext]:bg-black/20 [&_ .p-inputtext]:px-5 [&_ .p-inputtext]:py-[0.9rem] [&_ .p-inputtext]:text-base [&_ .p-inputtext]:font-medium [&_ .p-inputtext]:text-white [&_ .p-inputtext]:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_10px_30px_-18px_rgba(0,0,0,0.8)] [&_ .p-inputtext]:outline-none [&_ .p-inputtext]:transition-all [&_ .p-inputtext]:placeholder:text-slate-500 [&_ .p-inputtext:hover]:border-white/15 [&_ .p-inputtext:enabled:focus]:border-blue-500 [&_ .p-inputtext:enabled:focus]:bg-slate-950/70 [&_ .p-inputtext:enabled:focus]:ring-4 [&_ .p-inputtext:enabled:focus]:ring-blue-500/10 [&_ .p-password-input]:pr-12"
+            className="w-full [&& .p-icon-field]:w-full [&& .p-input-icon]:right-4 [&& .p-input-icon]:text-slate-400 [&& .p-input-icon]:transition-colors [&& .p-inputtext]:w-full [&& .p-inputtext]:rounded-[1.9rem] [&& .p-inputtext]:border [&& .p-inputtext]:border-white/10 [&& .p-inputtext]:bg-black/20 [&& .p-inputtext]:px-5 [&& .p-inputtext]:py-[0.9rem] [&& .p-inputtext]:text-base [&& .p-inputtext]:font-medium [&& .p-inputtext]:text-white [&& .p-inputtext]:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_10px_30px_-18px_rgba(0,0,0,0.8)] [&& .p-inputtext]:outline-none [&& .p-inputtext]:transition-all [&& .p-inputtext]:placeholder:text-slate-500 [&& .p-inputtext:hover]:border-white/15 [&& .p-inputtext:enabled:focus]:border-blue-500 [&& .p-inputtext:enabled:focus]:bg-slate-950/70 [&& .p-inputtext:enabled:focus]:ring-4 [&& .p-inputtext:enabled:focus]:ring-blue-500/10 [&& .p-password-input]:pr-12"
             inputClassName="w-full"
             placeholder="••••••••"
           />
@@ -78,9 +78,7 @@ export default function LoginForm() {
           loading={loading}
           className="mt-3 w-full rounded-full border-none bg-blue-600 py-4 text-lg font-bold text-white shadow-[0_20px_45px_-18px_rgba(37,99,235,0.9)] transition-all hover:scale-[1.01] hover:bg-blue-500 hover:shadow-[0_28px_56px_-18px_rgba(37,99,235,0.95)] active:scale-[0.99]"
         />
-        
-        </p>
       </form>
-    </>
+    </div>
   );
 }
