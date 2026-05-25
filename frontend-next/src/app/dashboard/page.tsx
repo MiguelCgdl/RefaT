@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Activity, AlertTriangle, LayoutDashboard, TrendingUp, Users, Plus } from 'lucide-react';
 import { Card } from 'primereact/card';
 import { ProgressBar } from 'primereact/progressbar';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const { token } = useAuth();
@@ -49,29 +50,33 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <Card className="rounded-[2.5rem] border-none shadow-3d bg-white/80 backdrop-blur-xl hover:shadow-3d-hover transition-all duration-500 group">
-          <div className="flex items-center gap-5 p-2">
-            <div className="p-5 bg-blue-50 text-blue-600 rounded-3xl group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-inner ring-1 ring-blue-500/10">
-              <Activity className="w-8 h-8" />
+        <Link href="/ordenes" className="block">
+          <Card className="rounded-[2.5rem] border-none shadow-3d bg-white/80 backdrop-blur-xl hover:shadow-3d-hover transition-all duration-500 group cursor-pointer">
+            <div className="flex items-center gap-5 p-2">
+              <div className="p-5 bg-blue-50 text-blue-600 rounded-3xl group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-inner ring-1 ring-blue-500/10">
+                <Activity className="w-8 h-8" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Órdenes Activas</p>
+                <h3 className="text-4xl font-black text-slate-900 tracking-tighter">{data?.ordenes_activas ?? 0}</h3>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Órdenes Activas</p>
-              <h3 className="text-4xl font-black text-slate-900 tracking-tighter">{data?.ordenes_activas ?? 0}</h3>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card className="rounded-[2.5rem] border-none shadow-3d bg-white/80 backdrop-blur-xl hover:shadow-3d-hover transition-all duration-500 group">
-          <div className="flex items-center gap-5 p-2">
-            <div className="p-5 bg-red-50 text-red-600 rounded-3xl group-hover:bg-red-600 group-hover:text-white transition-all duration-500 shadow-inner ring-1 ring-red-500/10">
-              <AlertTriangle className="w-8 h-8" />
+        <Link href="/refacciones" className="block">
+          <Card className="rounded-[2.5rem] border-none shadow-3d bg-white/80 backdrop-blur-xl hover:shadow-3d-hover transition-all duration-500 group cursor-pointer">
+            <div className="flex items-center gap-5 p-2">
+              <div className="p-5 bg-red-50 text-red-600 rounded-3xl group-hover:bg-red-600 group-hover:text-white transition-all duration-500 shadow-inner ring-1 ring-red-500/10">
+                <AlertTriangle className="w-8 h-8" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Bajo Stock</p>
+                <h3 className="text-4xl font-black text-slate-900 tracking-tighter">{data?.refacciones_bajo_stock ?? 0}</h3>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Bajo Stock</p>
-              <h3 className="text-4xl font-black text-slate-900 tracking-tighter">{data?.refacciones_bajo_stock ?? 0}</h3>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
