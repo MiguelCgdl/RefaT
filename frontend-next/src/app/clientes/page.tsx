@@ -243,6 +243,10 @@ export default function ClientesVehiculosPage() {
 
   const rowExpansionTemplate = (data: Cliente) => {
     const vels = getVehiculosByCliente(data.id);
+    const isAdding = showCreateVehiculo === data.id;
+    const isEditing = editVehiculo !== null && editVehiculo.cliente === data.id;
+    const showForm = isAdding || isEditing;
+
     return (
       <div className="p-10 bg-slate-50/50 rounded-[3rem] m-6 border border-slate-100 shadow-inner">
         <div className="flex items-center justify-between mb-8">
@@ -252,48 +256,284 @@ export default function ClientesVehiculosPage() {
             </div>
             Vehículos de {data.nombre}
           </h4>
-          <Button 
-            label="Vincular Vehículo" 
-            icon={<Plus className="w-4 h-4 mr-2" />} 
-            onClick={() => {
-              setEditVehiculo(null);
-              setShowCreateVehiculo(data.id);
-            }}
-            className="p-button-outlined p-button-sm rounded-xl font-bold border-2"
-          />
+          {!showForm && (
+            <Button 
+              label="Vincular Vehículo" 
+              icon={<Plus className="w-4 h-4 mr-2" />} 
+              onClick={() => {
+                setEditVehiculo(null);
+                setShowCreateVehiculo(data.id);
+              }}
+              className="p-button-outlined p-button-sm rounded-xl font-bold border-2"
+            />
+          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {vels.map((v: any) => (
-            <div key={v.id} className="group bg-white p-6 rounded-[2rem] shadow-md hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border border-slate-100 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50 rounded-full translate-x-8 translate-y-[-8] group-hover:scale-150 transition-transform duration-500" />
-              
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="font-mono font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-xl text-sm border border-blue-100">
-                    {v.placas}
-                  </span>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button icon="pi pi-pencil" rounded text severity="info" onClick={() => {
-                      setEditVehiculo(v);
-                      setShowCreateVehiculo(data.id);
-                    }} />
-                    <Button icon="pi pi-trash" rounded text severity="danger" onClick={() => setDeleteVehiculoItem(v)} />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* List panel */}
+          <div className={showForm ? "lg:col-span-6 xl:col-span-7 space-y-6" : "lg:col-span-12"}>
+            <div className={showForm ? "grid grid-cols-1 md:grid-cols-2 gap-6" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"}>
+              {vels.map((v: any) => (
+                <div key={v.id} className="group bg-white p-6 rounded-[2rem] shadow-md hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border border-slate-100 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50 rounded-full translate-x-8 translate-y-[-8] group-hover:scale-150 transition-transform duration-500" />
+                  
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="font-mono font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-xl text-sm border border-blue-100">
+                        {v.placas}
+                      </span>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button icon="pi pi-pencil" rounded text severity="info" onClick={() => {
+                          setEditVehiculo(v);
+                          setShowCreateVehiculo(null);
+                        }} />
+                        <Button icon="pi pi-trash" rounded text severity="danger" onClick={() => setDeleteVehiculoItem(v)} />
+                      </div>
+                    </div>
+                    
+                    <h5 className="text-xl font-black text-slate-900 mb-1">{v.marca} {v.modelo}</h5>
+                    <div className="flex flex-col gap-1 text-sm text-slate-500 font-bold">
+                      <span className="flex items-center gap-2"><div className="w-1 h-1 bg-slate-300 rounded-full" /> Año: {v.anio || 'N/A'}</span>
+                      <span className="flex items-center gap-2"><div className="w-1 h-1 bg-slate-300 rounded-full" /> Color: {v.color || 'N/A'}</span>
+                    </div>
                   </div>
                 </div>
-                
-                <h5 className="text-xl font-black text-slate-900 mb-1">{v.marca} {v.modelo}</h5>
-                <div className="flex flex-col gap-1 text-sm text-slate-500 font-bold">
-                  <span className="flex items-center gap-2"><div className="w-1 h-1 bg-slate-300 rounded-full" /> Año: {v.anio || 'N/A'}</span>
-                  <span className="flex items-center gap-2"><div className="w-1 h-1 bg-slate-300 rounded-full" /> Color: {v.color || 'N/A'}</span>
+              ))}
+              {vels.length === 0 && (
+                <div className="col-span-full py-12 text-center bg-white/50 rounded-[2rem] border-2 border-dashed border-slate-200">
+                  <Car className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+                  <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">Este cliente no tiene vehículos registrados</p>
                 </div>
-              </div>
+              )}
             </div>
-          ))}
-          {vels.length === 0 && (
-            <div className="col-span-full py-12 text-center bg-white/50 rounded-[2rem] border-2 border-dashed border-slate-200">
-              <Car className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-              <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">Este cliente no tiene vehículos registrados</p>
+          </div>
+
+          {/* Form panel */}
+          {showForm && (
+            <div className="lg:col-span-6 xl:col-span-5 bg-white rounded-[2.5rem] border border-slate-100 shadow-xl p-8 animate-in fade-in slide-in-from-right-4 duration-500">
+              <h4 className="text-2xl font-black text-slate-800 tracking-tight mb-6 flex items-center gap-3">
+                <div className="p-2 bg-emerald-100 rounded-xl text-emerald-600">
+                  <Car className="w-5 h-5" />
+                </div>
+                {isEditing ? `Editar Vehículo: ${editVehiculo?.placas}` : "Nuevo Vehículo"}
+              </h4>
+
+              <form
+                key={editVehiculo ? editVehiculo.id : 'new'}
+                className="space-y-6"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const fd = new FormData(e.currentTarget);
+                  const colorFinal = selectedColor === 'Otro' ? customColor.trim() : selectedColor;
+                  const dataSubmit = {
+                    marca: selectedMarca,
+                    modelo: selectedModelo,
+                    anio: Number(fd.get('anio')),
+                    placas: String(fd.get('placas') || '').toUpperCase(),
+                    color: colorFinal,
+                    kilometrajeActual: fd.get('kilometrajeActual') ? Number(fd.get('kilometrajeActual')) : '',
+                    tipo_motor: fd.get('tipo_motor'),
+                    kilometraje_actual: Number(fd.get('kilometraje_actual')),
+                    unidad_luces: (e.currentTarget.elements.namedItem('unidad_luces') as HTMLInputElement).checked,
+                    cuarto_luces: (e.currentTarget.elements.namedItem('cuarto_luces') as HTMLInputElement).checked,
+                    antena: (e.currentTarget.elements.namedItem('antena') as HTMLInputElement).checked,
+                    espejo_lateral: (e.currentTarget.elements.namedItem('espejo_lateral') as HTMLInputElement).checked,
+                    cristales: (e.currentTarget.elements.namedItem('cristales') as HTMLInputElement).checked,
+                    emblema: (e.currentTarget.elements.namedItem('emblema') as HTMLInputElement).checked,
+                    rines: Number(fd.get('rines')),
+                    tapon_gasolina: (e.currentTarget.elements.namedItem('tapon_gasolina') as HTMLInputElement).checked,
+                    carroceria_sin_golpes: (e.currentTarget.elements.namedItem('carroceria_sin_golpes') as HTMLInputElement).checked,
+                    gato: (e.currentTarget.elements.namedItem('gato') as HTMLInputElement).checked,
+                    bocina_claxon: (e.currentTarget.elements.namedItem('bocina_claxon') as HTMLInputElement).checked,
+                    limpiaparabrisas: (e.currentTarget.elements.namedItem('limpiaparabrisas') as HTMLInputElement).checked,
+                    llave_rueda: (e.currentTarget.elements.namedItem('llave_rueda') as HTMLInputElement).checked,
+                    llanta_repuesto: (e.currentTarget.elements.namedItem('llanta_repuesto') as HTMLInputElement).checked,
+                    gasolina_aprox: Number(fd.get('gasolina_aprox')),
+                    observaciones: fd.get('observaciones'),
+                  };
+
+                  if (!dataSubmit.marca || !dataSubmit.modelo || !colorFinal) {
+                    toast.current?.show({
+                      severity: 'warn',
+                      summary: 'Datos incompletos',
+                      detail: 'Selecciona marca, modelo y color para registrar el vehículo.',
+                    });
+                    return;
+                  }
+
+                  if (editVehiculo) {
+                    updateVehiculoMutation.mutate({ id: editVehiculo.id, data: dataSubmit });
+                  } else {
+                    createVehiculoMutation.mutate({ ...dataSubmit, clienteId: data.id });
+                  }
+                }}
+              >
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Marca *</label>
+                    <select
+                      value={selectedMarca}
+                      onChange={(e) => {
+                        setSelectedMarca(e.target.value);
+                        setSelectedModelo('');
+                      }}
+                      className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all p-3"
+                    >
+                      <option value="" disabled>Seleccionar marca...</option>
+                      {mergedMarcaOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Modelo *</label>
+                    <select
+                      value={selectedModelo}
+                      onChange={(e) => setSelectedModelo(e.target.value)}
+                      disabled={!selectedMarca}
+                      className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all p-3"
+                    >
+                      <option value="" disabled>{selectedMarca ? 'Seleccionar modelo...' : 'Marca primero'}</option>
+                      {modelOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Año *</label>
+                    <InputText name="anio" type="number" defaultValue={editVehiculo?.anio?.toString()} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-3" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Placas *</label>
+                    <InputText name="placas" defaultValue={editVehiculo?.placas} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-3 uppercase" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Color</label>
+                    <select
+                      value={selectedColor}
+                      onChange={(e) => {
+                        setSelectedColor(e.target.value);
+                        if (e.target.value !== 'Otro') {
+                          setCustomColor('');
+                        }
+                      }}
+                      className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all p-3"
+                    >
+                      <option value="" disabled>Seleccionar color...</option>
+                      {colorOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Kilometraje</label>
+                    <InputText name="kilometrajeActual" type="number" defaultValue={editVehiculo?.kilometraje_actual?.toString()} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-3" />
+                  </div>
+                </div>
+
+                {selectedColor === 'Otro' && (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Especificar Color *</label>
+                    <InputText value={customColor} onChange={(e) => setCustomColor(e.target.value)} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-3" placeholder="Ej. Azul eléctrico" />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Tipo Motor (cil)</label>
+                    <InputText name="tipo_motor" defaultValue={(editVehiculo as any)?.tipo_motor} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-3" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Km Recorridos</label>
+                    <InputNumber name="kilometraje_actual" value={(editVehiculo as any)?.kilometraje_actual} mode="decimal" className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all" />
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 pt-6">
+                  <h5 className="text-xs font-black text-slate-600 uppercase tracking-widest mb-4">Inventario y Accesorios</h5>
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+                    <div className="flex items-center">
+                      <input type="checkbox" id="unidad_luces" name="unidad_luces" defaultChecked={(editVehiculo as any)?.unidad_luces} className="rounded border-slate-200 text-emerald-600 focus:ring-emerald-500/20 mr-2" />
+                      <label htmlFor="unidad_luces" className="text-xs font-bold text-slate-700">Unidad de Luces</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input type="checkbox" id="cuarto_luces" name="cuarto_luces" defaultChecked={(editVehiculo as any)?.cuarto_luces} className="rounded border-slate-200 text-emerald-600 focus:ring-emerald-500/20 mr-2" />
+                      <label htmlFor="cuarto_luces" className="text-xs font-bold text-slate-700">1/4 de Luces</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input type="checkbox" id="antena" name="antena" defaultChecked={(editVehiculo as any)?.antena} className="rounded border-slate-200 text-emerald-600 focus:ring-emerald-500/20 mr-2" />
+                      <label htmlFor="antena" className="text-xs font-bold text-slate-700">Antena</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input type="checkbox" id="espejo_lateral" name="espejo_lateral" defaultChecked={(editVehiculo as any)?.espejo_lateral} className="rounded border-slate-200 text-emerald-600 focus:ring-emerald-500/20 mr-2" />
+                      <label htmlFor="espejo_lateral" className="text-xs font-bold text-slate-700">Espejo Lateral</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input type="checkbox" id="cristales" name="cristales" defaultChecked={(editVehiculo as any)?.cristales} className="rounded border-slate-200 text-emerald-600 focus:ring-emerald-500/20 mr-2" />
+                      <label htmlFor="cristales" className="text-xs font-bold text-slate-700">Cristales</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input type="checkbox" id="emblema" name="emblema" defaultChecked={(editVehiculo as any)?.emblema} className="rounded border-slate-200 text-emerald-600 focus:ring-emerald-500/20 mr-2" />
+                      <label htmlFor="emblema" className="text-xs font-bold text-slate-700">Emblema</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input type="checkbox" id="tapon_gasolina" name="tapon_gasolina" defaultChecked={(editVehiculo as any)?.tapon_gasolina} className="rounded border-slate-200 text-emerald-600 focus:ring-emerald-500/20 mr-2" />
+                      <label htmlFor="tapon_gasolina" className="text-xs font-bold text-slate-700">Tapón de Gasolina</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input type="checkbox" id="carroceria_sin_golpes" name="carroceria_sin_golpes" defaultChecked={(editVehiculo as any)?.carroceria_sin_golpes} className="rounded border-slate-200 text-emerald-600 focus:ring-emerald-500/20 mr-2" />
+                      <label htmlFor="carroceria_sin_golpes" className="text-xs font-bold text-slate-700">Carrocería sin Golpes</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input type="checkbox" id="gato" name="gato" defaultChecked={(editVehiculo as any)?.gato} className="rounded border-slate-200 text-emerald-600 focus:ring-emerald-500/20 mr-2" />
+                      <label htmlFor="gato" className="text-xs font-bold text-slate-700">Gato</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input type="checkbox" id="bocina_claxon" name="bocina_claxon" defaultChecked={(editVehiculo as any)?.bocina_claxon} className="rounded border-slate-200 text-emerald-600 focus:ring-emerald-500/20 mr-2" />
+                      <label htmlFor="bocina_claxon" className="text-xs font-bold text-slate-700">Bocina/Claxon</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input type="checkbox" id="limpiaparabrisas" name="limpiaparabrisas" defaultChecked={(editVehiculo as any)?.limpiaparabrisas} className="rounded border-slate-200 text-emerald-600 focus:ring-emerald-500/20 mr-2" />
+                      <label htmlFor="limpiaparabrisas" className="text-xs font-bold text-slate-700">Limpiaparabrisas</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input type="checkbox" id="llave_rueda" name="llave_rueda" defaultChecked={(editVehiculo as any)?.llave_rueda} className="rounded border-slate-200 text-emerald-600 focus:ring-emerald-500/20 mr-2" />
+                      <label htmlFor="llave_rueda" className="text-xs font-bold text-slate-700">Llave de Rueda</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input type="checkbox" id="llanta_repuesto" name="llanta_repuesto" defaultChecked={(editVehiculo as any)?.llanta_repuesto} className="rounded border-slate-200 text-emerald-600 focus:ring-emerald-500/20 mr-2" />
+                      <label htmlFor="llanta_repuesto" className="text-xs font-bold text-slate-700">Llanta de Repuesto</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 pt-6 grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Rines</label>
+                    <InputNumber name="rines" value={(editVehiculo as any)?.rines || 4} mode="decimal" className="rounded-2xl border-slate-200 bg-white/80" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Gasolina (%)</label>
+                    <InputNumber name="gasolina_aprox" value={(editVehiculo as any)?.gasolina_aprox} mode="decimal" min={0} max={100} className="rounded-2xl border-slate-200 bg-white/80" />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Observaciones</label>
+                  <textarea name="observaciones" defaultValue={(editVehiculo as any)?.observaciones} className="rounded-2xl border border-slate-200 bg-white/80 p-3 text-slate-800 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none" rows={3} />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                  <Button label="Cancelar" type="button" text className="font-bold rounded-2xl px-6 py-2.5 hover:bg-slate-100 transition-all text-sm" onClick={() => { setShowCreateVehiculo(null); setEditVehiculo(null); setSelectedMarca(''); setSelectedModelo(''); setSelectedColor(''); setCustomColor(''); }} />
+                  <Button label={editVehiculo ? "Actualizar" : "Guardar"} type="submit" loading={createVehiculoMutation.isPending || updateVehiculoMutation.isPending} className="font-black rounded-2xl px-8 py-2.5 shadow-3d shadow-emerald-600/30 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 border-none transition-all active:scale-95 text-sm" />
+                </div>
+              </form>
             </div>
           )}
         </div>
@@ -446,219 +686,7 @@ export default function ClientesVehiculosPage() {
         </form>
       </Dialog>
 
-      <Dialog 
-          header={editVehiculo ? "Editar Vehículo" : "Nuevo Vehículo"} 
-          visible={showCreateVehiculo !== null || !!editVehiculo} 
-          style={{ width: '100%', maxWidth: '540px' }} 
-          onHide={() => { setShowCreateVehiculo(null); setEditVehiculo(null); }}
-          className="rounded-[3rem] shadow-3d border border-slate-200 overflow-hidden"
-          headerClassName="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-8 border-b border-emerald-800/30"
-          contentClassName="bg-gradient-to-b from-white to-slate-50/80 p-8 overflow-y-auto max-h-[80vh]"
-          baseZIndex={dialogBaseZIndex}
-        >
-        <form className="grid grid-cols-1 gap-6 pt-2" onSubmit={(e) => {
-          e.preventDefault();
-          const fd = new FormData(e.currentTarget);
-          const colorFinal = selectedColor === 'Otro' ? customColor.trim() : selectedColor;
-          const data = {
-            marca: selectedMarca,
-            modelo: selectedModelo,
-            anio: Number(fd.get('anio')),
-            placas: String(fd.get('placas') || '').toUpperCase(),
-            color: colorFinal,
-            kilometrajeActual: fd.get('kilometrajeActual') ? Number(fd.get('kilometrajeActual')) : '',
-            tipo_motor: fd.get('tipo_motor'),
-            kilometraje_actual: Number(fd.get('kilometraje_actual')),
-            unidad_luces: (e.currentTarget.elements.namedItem('unidad_luces') as HTMLInputElement).checked,
-            cuarto_luces: (e.currentTarget.elements.namedItem('cuarto_luces') as HTMLInputElement).checked,
-            antena: (e.currentTarget.elements.namedItem('antena') as HTMLInputElement).checked,
-            espejo_lateral: (e.currentTarget.elements.namedItem('espejo_lateral') as HTMLInputElement).checked,
-            cristales: (e.currentTarget.elements.namedItem('cristales') as HTMLInputElement).checked,
-            emblema: (e.currentTarget.elements.namedItem('emblema') as HTMLInputElement).checked,
-            rines: Number(fd.get('rines')),
-            tapon_gasolina: (e.currentTarget.elements.namedItem('tapon_gasolina') as HTMLInputElement).checked,
-            carroceria_sin_golpes: (e.currentTarget.elements.namedItem('carroceria_sin_golpes') as HTMLInputElement).checked,
-            gato: (e.currentTarget.elements.namedItem('gato') as HTMLInputElement).checked,
-            bocina_claxon: (e.currentTarget.elements.namedItem('bocina_claxon') as HTMLInputElement).checked,
-            limpiaparabrisas: (e.currentTarget.elements.namedItem('limpiaparabrisas') as HTMLInputElement).checked,
-            llave_rueda: (e.currentTarget.elements.namedItem('llave_rueda') as HTMLInputElement).checked,
-            llanta_repuesto: (e.currentTarget.elements.namedItem('llanta_repuesto') as HTMLInputElement).checked,
-            gasolina_aprox: Number(fd.get('gasolina_aprox')),
-            observaciones: fd.get('observaciones'),
-          };
 
-          if (!data.marca || !data.modelo || !colorFinal) {
-            toast.current?.show({
-              severity: 'warn',
-              summary: 'Datos incompletos',
-              detail: 'Selecciona marca, modelo y color para registrar el vehículo.',
-            });
-            return;
-          }
-
-          if (editVehiculo) updateVehiculoMutation.mutate({ id: editVehiculo.id, data });
-          else createVehiculoMutation.mutate({ ...data, clienteId: showCreateVehiculo });
-        }}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Marca *</label>
-            <select
-              value={selectedMarca}
-              onChange={(e) => {
-                setSelectedMarca(e.target.value);
-                setSelectedModelo('');
-              }}
-              className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
-            >
-              <option value="" disabled>Seleccionar marca...</option>
-              {mergedMarcaOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Modelo *</label>
-            <select
-              value={selectedModelo}
-              onChange={(e) => setSelectedModelo(e.target.value)}
-              disabled={!selectedMarca}
-              className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
-            >
-              <option value="" disabled>{selectedMarca ? 'Seleccionar modelo...' : 'Primero selecciona una marca'}</option>
-              {modelOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-6 mt-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Año *</label>
-            <InputText name="anio" type="number" defaultValue={editVehiculo?.anio?.toString()} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Placas *</label>
-            <InputText name="placas" defaultValue={editVehiculo?.placas} required className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4 uppercase" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-6 mt-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Color</label>
-            <select
-              value={selectedColor}
-              onChange={(e) => {
-                setSelectedColor(e.target.value);
-                if (e.target.value !== 'Otro') {
-                  setCustomColor('');
-                }
-              }}
-              className="refa-native-select rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all"
-            >
-              <option value="" disabled>Seleccionar color...</option>
-              {colorOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Kilometraje</label>
-            <InputText name="kilometrajeActual" type="number" defaultValue={editVehiculo?.kilometraje_actual?.toString()} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
-          </div>
-        </div>
-        {selectedColor === 'Otro' && (
-          <div className="flex flex-col gap-2 mt-4">
-            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Especificar Color *</label>
-            <InputText value={customColor} onChange={(e) => setCustomColor(e.target.value)} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" placeholder="Ej. Azul eléctrico tricapa" />
-          </div>
-        )}
-        <div className="grid grid-cols-2 gap-6 mt-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Tipo Motor (cil)</label>
-            <InputText name="tipo_motor" defaultValue={(editVehiculo as any)?.tipo_motor} className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Kilómetros Recorridos</label>
-            <InputNumber name="kilometraje_actual" value={(editVehiculo as any)?.kilometraje_actual} mode="decimal" className="rounded-2xl border-slate-200 bg-white/80 shadow-inner focus:ring-4 focus:ring-emerald-500/20 transition-all py-4" />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-          <div className="flex items-center">
-            <input type="checkbox" id="unidad_luces" name="unidad_luces" defaultChecked={(editVehiculo as any)?.unidad_luces} className="mr-2" />
-            <label htmlFor="unidad_luces" className="text-xs font-medium">Unidad de Luces</label>
-          </div>
-          <div className="flex items-center">
-            <input type="checkbox" id="cuarto_luces" name="cuarto_luces" defaultChecked={(editVehiculo as any)?.cuarto_luces} className="mr-2" />
-            <label htmlFor="cuarto_luces" className="text-xs font-medium">1/4 de Luces</label>
-          </div>
-          <div className="flex items-center">
-            <input type="checkbox" id="antena" name="antena" defaultChecked={(editVehiculo as any)?.antena} className="mr-2" />
-            <label htmlFor="antena" className="text-xs font-medium">Antena</label>
-          </div>
-          <div className="flex items-center">
-            <input type="checkbox" id="espejo_lateral" name="espejo_lateral" defaultChecked={(editVehiculo as any)?.espejo_lateral} className="mr-2" />
-            <label htmlFor="espejo_lateral" className="text-xs font-medium">Espejo Lateral</label>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-          <div className="flex items-center">
-            <input type="checkbox" id="cristales" name="cristales" defaultChecked={(editVehiculo as any)?.cristales} className="mr-2" />
-            <label htmlFor="cristales" className="text-xs font-medium">Cristales</label>
-          </div>
-          <div className="flex items-center">
-            <input type="checkbox" id="emblema" name="emblema" defaultChecked={(editVehiculo as any)?.emblema} className="mr-2" />
-            <label htmlFor="emblema" className="text-xs font-medium">Emblema</label>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-xs font-medium">Rines</label>
-            <InputNumber name="rines" value={(editVehiculo as any)?.rines || 4} mode="decimal" className="rounded-2xl border-slate-200 bg-white/80" />
-          </div>
-          <div className="flex items-center">
-            <input type="checkbox" id="tapon_gasolina" name="tapon_gasolina" defaultChecked={(editVehiculo as any)?.tapon_gasolina} className="mr-2" />
-            <label htmlFor="tapon_gasolina" className="text-xs font-medium">Tapón de Gasolina</label>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-          <div className="flex items-center">
-            <input type="checkbox" id="carroceria_sin_golpes" name="carroceria_sin_golpes" defaultChecked={(editVehiculo as any)?.carroceria_sin_golpes} className="mr-2" />
-            <label htmlFor="carroceria_sin_golpes" className="text-xs font-medium">Carrocería sin Golpes</label>
-          </div>
-          <div className="flex items-center">
-            <input type="checkbox" id="gato" name="gato" defaultChecked={(editVehiculo as any)?.gato} className="mr-2" />
-            <label htmlFor="gato" className="text-xs font-medium">Gato</label>
-          </div>
-          <div className="flex items-center">
-            <input type="checkbox" id="bocina_claxon" name="bocina_claxon" defaultChecked={(editVehiculo as any)?.bocina_claxon} className="mr-2" />
-            <label htmlFor="bocina_claxon" className="text-xs font-medium">Bocina/Claxon</label>
-          </div>
-          <div className="flex items-center">
-            <input type="checkbox" id="limpiaparabrisas" name="limpiaparabrisas" defaultChecked={(editVehiculo as any)?.limpiaparabrisas} className="mr-2" />
-            <label htmlFor="limpiaparabrisas" className="text-xs font-medium">Limpiaparabrisas</label>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-          <div className="flex items-center">
-            <input type="checkbox" id="llave_rueda" name="llave_rueda" defaultChecked={(editVehiculo as any)?.llave_rueda} className="mr-2" />
-            <label htmlFor="llave_rueda" className="text-xs font-medium">Llave de Rueda</label>
-          </div>
-          <div className="flex items-center">
-            <input type="checkbox" id="llanta_repuesto" name="llanta_repuesto" defaultChecked={(editVehiculo as any)?.llanta_repuesto} className="mr-2" />
-            <label htmlFor="llanta_repuesto" className="text-xs font-medium">Llanta de Repuesto</label>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-xs font-medium">Gasolina Aproximada (%)</label>
-            <InputNumber name="gasolina_aprox" value={(editVehiculo as any)?.gasolina_aprox} mode="decimal" min={0} max={100} className="rounded-2xl border-slate-200 bg-white/80" />
-          </div>
-          <div className="flex flex-col">
-            <label className="text-xs font-medium">Observaciones</label>
-            <textarea name="observaciones" defaultValue={(editVehiculo as any)?.observaciones} className="rounded-2xl border-slate-200 bg-white/80 p-2" rows={3} />
-          </div>
-        </div>
-        <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-slate-100">
-          <Button label="Cancelar" type="button" text className="font-bold rounded-2xl px-8 py-3 hover:bg-slate-100 transition-all" onClick={() => { setShowCreateVehiculo(null); setEditVehiculo(null); setSelectedMarca(''); setSelectedModelo(''); setSelectedColor(''); setCustomColor(''); }} />
-          <Button label={editVehiculo ? "Actualizar" : "Guardar"} type="submit" loading={createVehiculoMutation.isPending || updateVehiculoMutation.isPending} className="font-black rounded-2xl px-10 py-3 shadow-3d shadow-emerald-600/30 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 border-none transition-all active:scale-95" />
-        </div>
-      </form>
-</Dialog>
         
     
 
