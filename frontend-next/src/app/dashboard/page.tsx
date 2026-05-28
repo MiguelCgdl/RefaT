@@ -311,6 +311,14 @@ export default function DashboardPage() {
             </button>
 
             <button
+              onClick={() => window.location.href = '/taller'}
+              className="group flex items-center justify-between p-5 bg-slate-50/50 text-slate-700 rounded-[1.5rem] hover:bg-slate-100 border border-slate-100 hover:border-amber-200 transition-all duration-300 active:scale-95 shadow-sm"
+            >
+              <span className="font-black text-base tracking-tight">Taller y Reparaciones</span>
+              <Wrench className="w-5 h-5 text-slate-300 group-hover:text-amber-500 transition-colors" />
+            </button>
+
+            <button
               onClick={() => window.location.href = '/refacciones'}
               className="group flex items-center justify-between p-5 bg-slate-50/50 text-slate-700 rounded-[1.5rem] hover:bg-slate-100 border border-slate-100 hover:border-emerald-200 transition-all duration-300 active:scale-95 shadow-sm"
             >

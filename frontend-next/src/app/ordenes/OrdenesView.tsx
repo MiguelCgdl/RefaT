@@ -52,6 +52,8 @@ export default function OrdenesView({ hideHeader = false }: { hideHeader?: boole
   });
 
   const [search, setSearch] = useState('');
+  const [selectedEstadoFilter, setSelectedEstadoFilter] = useState<string>('TODOS');
+  const [selectedPrioridadFilter, setSelectedPrioridadFilter] = useState<string>('TODOS');
   const [showCreate, setShowCreate] = useState(false);
   const [editItem, setEditItem] = useState<OrdenTrabajo | null>(null);
   const [deleteItem, setDeleteItem] = useState<OrdenTrabajo | null>(null);
@@ -102,10 +104,23 @@ export default function OrdenesView({ hideHeader = false }: { hideHeader?: boole
     onError: (e: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: e.message }),
   });
 
-  const filtered = (ordenes?.results ?? []).filter(o =>
-    o.folio.toLowerCase().includes(search.toLowerCase()) ||
-    (o.vehiculo_placas ?? '').toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = (ordenes?.results ?? []).filter(o => {
+    const matchesSearch =
+      o.folio.toLowerCase().includes(search.toLowerCase()) ||
+      (o.vehiculo_placas ?? '').toLowerCase().includes(search.toLowerCase());
+    
+    if (!matchesSearch) return false;
+
+    if (selectedEstadoFilter !== 'TODOS' && String(o.estado || '').toUpperCase() !== selectedEstadoFilter) {
+      return false;
+    }
+
+    if (selectedPrioridadFilter !== 'TODOS' && String(o.prioridad || '').toUpperCase() !== selectedPrioridadFilter) {
+      return false;
+    }
+
+    return true;
+  });
 
   const statusBodyTemplate = (rowData: OrdenTrabajo) => {
     const getSeverity = (status: string) => {
@@ -195,15 +210,49 @@ export default function OrdenesView({ hideHeader = false }: { hideHeader?: boole
       </div>
 
       <div className="card bg-white/80 backdrop-blur-xl rounded-[3rem] shadow-3d border border-slate-100 overflow-hidden transition-all hover:shadow-[0_30px_60px_rgba(0,0,0,0.1)]">
-        <div className="p-8 border-b border-slate-50 bg-gradient-to-r from-slate-50/50 to-transparent">
-          <div className="refa-search-shell max-w-2xl">
-            <Search className="refa-search-icon" />
-            <InputText 
-              value={search} 
-              onChange={(e) => setSearch(e.target.value)} 
-              placeholder="Buscar por folio o placas..." 
-              className="refa-search-input rounded-[2rem] border-slate-100 bg-slate-50/30 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner"
-            />
+        <div className="p-8 border-b border-slate-50 bg-gradient-to-r from-slate-50/50 to-transparent flex flex-col gap-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="refa-search-shell flex-grow max-w-xl">
+              <Search className="refa-search-icon" />
+              <InputText 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+                placeholder="Buscar por folio o placas..." 
+                className="refa-search-input rounded-[2rem] border-slate-100 bg-slate-50/30 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Estado Selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase text-slate-400">Estado:</span>
+                <select
+                  value={selectedEstadoFilter}
+                  onChange={(e) => setSelectedEstadoFilter(e.target.value)}
+                  className="refa-native-select rounded-xl !min-h-[2.85rem] !py-1 px-4 !text-xs !font-bold w-[160px]"
+                >
+                  <option value="TODOS">TODOS</option>
+                  {STATUS.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Prioridad Selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase text-slate-400">Prioridad:</span>
+                <select
+                  value={selectedPrioridadFilter}
+                  onChange={(e) => setSelectedPrioridadFilter(e.target.value)}
+                  className="refa-native-select rounded-xl !min-h-[2.85rem] !py-1 px-4 !text-xs !font-bold w-[140px]"
+                >
+                  <option value="TODOS">TODAS</option>
+                  {PRIORIDADES.map((p) => (
+                    <option key={p.value} value={p.value}>{p.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 

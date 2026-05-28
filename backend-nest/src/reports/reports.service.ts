@@ -77,11 +77,18 @@ export class ReportsService {
     ws.columns = [
       { header: 'SKU', key: 'sku', width: 15 },
       { header: 'Nombre', key: 'nombre', width: 30 },
+      { header: 'Categoría', key: 'categoria', width: 20 },
       { header: 'Stock', key: 'stock', width: 10 },
       { header: 'Precio', key: 'precio', width: 12 },
     ];
     refacciones.forEach((r) => {
-      ws.addRow({ sku: r.sku, nombre: r.nombre, stock: r.stock.toString(), precio: r.precioVenta.toString() });
+      ws.addRow({
+        sku: r.sku,
+        nombre: r.nombre,
+        categoria: r.categoria || '',
+        stock: r.stock.toString(),
+        precio: r.precioVenta.toString()
+      });
     });
     const buf = await wb.xlsx.writeBuffer();
     return Buffer.from(buf);
