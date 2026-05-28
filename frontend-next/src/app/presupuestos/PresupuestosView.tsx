@@ -39,6 +39,7 @@ export default function PresupuestosView({ hideHeader = false }: { hideHeader?: 
   });
 
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ACTIVOS' | 'BORRADOR' | 'ENVIADO' | 'APROBADO' | 'RECHAZADO'>('ACTIVOS');
   const [showCreate, setShowCreate] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
   const [deleteItem, setDeleteItem] = useState<any>(null);
@@ -114,10 +115,19 @@ export default function PresupuestosView({ hideHeader = false }: { hideHeader?: 
     }
   };
 
-  const filtered = (presupuestos?.results ?? []).filter((p: any) =>
-    (p.folio ?? '').toLowerCase().includes(search.toLowerCase()) ||
-    (p.orden_folio ?? '').toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = (presupuestos?.results ?? []).filter((p: any) => {
+    const matchesSearch =
+      (p.folio ?? '').toLowerCase().includes(search.toLowerCase()) ||
+      (p.orden_folio ?? '').toLowerCase().includes(search.toLowerCase());
+    
+    if (!matchesSearch) return false;
+
+    const status = String(p.estado || '').toUpperCase();
+    if (statusFilter === 'ACTIVOS') {
+      return status !== 'RECHAZADO';
+    }
+    return status === statusFilter;
+  });
 
   const statusBodyTemplate = (rowData: any) => {
     const status = String(rowData.estado).toUpperCase();
@@ -181,7 +191,7 @@ export default function PresupuestosView({ hideHeader = false }: { hideHeader?: 
       </div>
 
       <div className="card bg-white/80 backdrop-blur-xl rounded-[3rem] shadow-3d border border-slate-100 overflow-hidden transition-all hover:shadow-[0_30px_60px_rgba(0,0,0,0.1)]">
-        <div className="p-8 border-b border-slate-50 bg-gradient-to-r from-slate-50/50 to-transparent">
+        <div className="p-8 border-b border-slate-50 bg-gradient-to-r from-slate-50/50 to-transparent flex flex-col gap-6">
           <div className="refa-search-shell max-w-2xl">
             <Search className="refa-search-icon" />
             <InputText 
@@ -190,6 +200,29 @@ export default function PresupuestosView({ hideHeader = false }: { hideHeader?: 
               placeholder="Buscar por folio de presupuesto u orden..." 
               className="refa-search-input rounded-[2rem] border-slate-100 bg-slate-50/30 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner"
             />
+          </div>
+
+          {/* Status chips */}
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: 'ACTIVOS', label: 'Activos / Recientes' },
+              { key: 'BORRADOR', label: 'Borrador' },
+              { key: 'ENVIADO', label: 'Enviado' },
+              { key: 'APROBADO', label: 'Aprobado' },
+              { key: 'RECHAZADO', label: 'Archivados / Rechazados' }
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setStatusFilter(opt.key as any)}
+                className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border transition-all duration-200 ${
+                  statusFilter === opt.key
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/30'
+                    : 'bg-white/5 text-slate-400 border-slate-700 hover:border-blue-500 hover:text-blue-400'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
         </div>
 
