@@ -16,6 +16,14 @@ async function request<T>(path: string, options: Options = {}): Promise<T> {
     },
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('refa_jwt');
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
+    }
     const error = await res.json().catch(() => ({}));
     const msg = (error as { detalle?: string; message?: string }).detalle ?? (error as { message?: string }).message;
     throw new Error(msg ?? `Error HTTP ${res.status}`);

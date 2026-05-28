@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createRefaccion, getRefacciones, updateRefaccion, deleteRefaccion } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, Package, Pencil, Trash2, Search, Download, Upload, FileSpreadsheet } from 'lucide-react';
+import { Plus, Package, Pencil, Trash2, Search, Download, Upload, FileSpreadsheet, Tag as TagIcon, Filter } from 'lucide-react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
@@ -29,6 +29,7 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
   });
 
   const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('Todos');
   const [showCreate, setShowCreate] = useState(false);
   const [editItem, setEditItem] = useState<Refaccion | null>(null);
   const [deleteItem, setDeleteItem] = useState<Refaccion | null>(null);
@@ -66,10 +67,18 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
 
   const refacciones = refaccionesResponse?.results ?? [];
 
-  const filtered = refacciones.filter(r =>
-    r.nombre.toLowerCase().includes(search.toLowerCase()) ||
-    r.sku.toLowerCase().includes(search.toLowerCase())
-  );
+  // Derive sorted unique categories from data
+  const allCategories = ['Todos', ...Array.from(new Set(refacciones.map((r) => (r as any).categoria).filter(Boolean))).sort()];
+
+  const filtered = refacciones.filter(r => {
+    const q = search.toLowerCase();
+    const matchesSearch = !q ||
+      r.nombre.toLowerCase().includes(q) ||
+      r.sku.toLowerCase().includes(q) ||
+      ((r as any).categoria ?? '').toLowerCase().includes(q);
+    const matchesCat = categoryFilter === 'Todos' || (r as any).categoria === categoryFilter;
+    return matchesSearch && matchesCat;
+  });
 
   // Excel Logic
   const exportToExcel = () => {
@@ -146,11 +155,13 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
   };
 
   const pieceBodyTemplate = (rowData: Refaccion) => (
-    <div className="flex flex-col">
-      <span className="font-bold text-slate-800">{rowData.nombre}</span>
-      <span className="text-[10px] font-mono font-bold text-blue-500 tracking-wider uppercase">{rowData.sku}</span>
-    </div>
+    <span className="font-bold text-slate-800">{rowData.nombre}</span>
   );
+
+  const skuBodyTemplate = (rowData: Refaccion) => (
+    <span className="text-xs font-mono font-bold text-blue-600 tracking-wider uppercase">{rowData.sku}</span>
+  );
+
 
   const stockBodyTemplate = (rowData: Refaccion) => (
     <div className="flex items-center gap-2">
@@ -198,7 +209,27 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-bold text-slate-500 uppercase">Categoría</label>
-          <InputText name="categoria" defaultValue={(item as any)?.categoria} className="rounded-xl shadow-inner" />
+          <select
+            name="categoria"
+            defaultValue={(item as any)?.categoria || ''}
+            className="refa-native-select rounded-xl shadow-inner"
+          >
+            <option value="">Sin categoría</option>
+            <option value="Aceites y Lubricantes">Aceites y Lubricantes</option>
+            <option value="Filtros">Filtros</option>
+            <option value="Frenos">Frenos</option>
+            <option value="Motor">Motor</option>
+            <option value="Suspensión">Suspensión</option>
+            <option value="Eléctrico">Eléctrico</option>
+            <option value="Carrocería">Carrocería</option>
+            <option value="Transmisión">Transmisión</option>
+            <option value="Refrigeración">Refrigeración</option>
+            <option value="Escape">Escape</option>
+            <option value="Neumáticos">Neumáticos</option>
+            <option value="Herramientas">Herramientas</option>
+            <option value="Consumibles">Consumibles</option>
+            <option value="Otro">Otro</option>
+          </select>
         </div>
       </div>
       <div className="flex flex-col gap-1">
@@ -288,19 +319,39 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
 
       {/* Main Content Card - 3D Glassmorphism/Neumorphism feel */}
       <div className="card bg-white rounded-[2.5rem] shadow-3d border border-slate-100 overflow-hidden transition-all hover:shadow-[0_30px_60px_rgba(0,0,0,0.08)]">
-        <div className="p-8 border-b border-slate-50 bg-gradient-to-r from-slate-50/50 to-transparent flex flex-col sm:flex-row sm:items-center gap-6">
-          <div className="refa-search-shell flex-1">
-            <Search className="refa-search-icon" />
-            <InputText 
-              value={search} 
-              onChange={(e) => setSearch(e.target.value)} 
-              placeholder="Buscar por SKU o nombre de pieza..." 
-              className="refa-search-input rounded-2xl border-slate-100 bg-slate-50/30 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all"
-            />
+        <div className="p-5 border-b border-slate-50 bg-gradient-to-r from-slate-50/50 to-transparent flex flex-col gap-4">
+          {/* Search + count row */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="refa-search-shell flex-1">
+              <Search className="refa-search-icon" />
+              <InputText 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+                placeholder="Buscar por SKU, nombre o categoría..." 
+                className="refa-search-input rounded-2xl border-slate-100 bg-slate-50/30 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all"
+              />
+            </div>
+            <div className="flex items-center gap-3 px-4 py-2 bg-blue-50/50 rounded-2xl border border-blue-100 shadow-inner flex-shrink-0">
+              <FileSpreadsheet className="w-5 h-5 text-blue-600" />
+              <span className="text-xs font-black text-blue-700 uppercase tracking-widest">{filtered.length} Items</span>
+            </div>
           </div>
-          <div className="flex items-center gap-3 px-4 py-2 bg-blue-50/50 rounded-2xl border border-blue-100 shadow-inner">
-            <FileSpreadsheet className="w-5 h-5 text-blue-600" />
-            <span className="text-xs font-black text-blue-700 uppercase tracking-widest">{filtered.length} Items</span>
+
+          {/* Category chips */}
+          <div className="flex flex-wrap gap-2">
+            {allCategories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCategoryFilter(cat)}
+                className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border transition-all duration-200 ${
+                  categoryFilter === cat
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/30'
+                    : 'bg-white/5 text-slate-400 border-slate-700 hover:border-blue-500 hover:text-blue-400'
+                }`}
+              >
+                {cat === 'Todos' ? <span className="flex items-center gap-1"><Filter className="w-3 h-3" /> Todos</span> : cat}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -325,6 +376,7 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
           stripedRows
           showGridlines={false}
         >
+          <Column header="SKU" body={skuBodyTemplate} sortable sortField="sku" className="px-8 py-6" />
           <Column header="Pieza / Modelo" body={pieceBodyTemplate} sortable sortField="nombre" className="px-8 py-6" />
           <Column field="categoria" header="Categoría" body={(r) => <Tag value={(r as any).categoria || 'N/A'} severity="secondary" className="text-[10px] font-bold uppercase tracking-wider px-3" />} sortable className="px-8 py-6" />
           <Column header="Existencia" body={stockBodyTemplate} sortable sortField="stock" className="px-8 py-6" />

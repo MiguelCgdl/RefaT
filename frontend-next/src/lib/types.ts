@@ -79,4 +79,6 @@ export interface DashboardResumen {
   ordenes_por_estado: { estado: string; total: number }[];
   refacciones_bajo_stock: number;
   ordenes_activas: number;
+  vehiculos_en_taller: number;
 }
+

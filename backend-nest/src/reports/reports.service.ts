@@ -27,6 +27,14 @@ export class ReportsService {
       where: { estado: { notIn: [EstadoOrden.ENTREGADO, EstadoOrden.CANCELADO] } },
     });
 
+    // Vehículos únicos actualmente en taller (con órdenes activas)
+    const vehiculosEnTallerResult = await this.prisma.ordenTrabajo.findMany({
+      where: { estado: { notIn: [EstadoOrden.ENTREGADO, EstadoOrden.CANCELADO] } },
+      select: { vehiculoId: true },
+      distinct: ['vehiculoId'],
+    });
+    const vehiculosEnTaller = vehiculosEnTallerResult.length;
+
     return {
       ordenes_por_estado: grupos.map((g) => ({
         estado: g.estado.toLowerCase(),
@@ -34,8 +42,10 @@ export class ReportsService {
       })),
       refacciones_bajo_stock: refaccionesBajoStock,
       ordenes_activas: ordenesActivas,
+      vehiculos_en_taller: vehiculosEnTaller,
     };
   }
+
 
   /** Stub básico: PDF de presupuesto */
   async generarPdfPresupuesto(presupuestoId: number): Promise<Buffer> {

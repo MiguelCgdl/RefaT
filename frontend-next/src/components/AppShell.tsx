@@ -42,8 +42,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col overflow-hidden bg-[#040816] lg:flex-row">
-      <div className="relative z-20 flex w-full flex-col border-b border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.96)_0%,rgba(10,16,32,0.96)_100%)] text-slate-300 shadow-[24px_0_80px_-30px_rgba(0,0,0,0.9)] lg:min-h-screen lg:w-80 lg:border-b-0 lg:border-r">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#040816] lg:flex-row">
+      <div className="relative z-20 flex w-full flex-col border-b border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.96)_0%,rgba(10,16,32,0.96)_100%)] text-slate-300 shadow-[24px_0_80px_-30px_rgba(0,0,0,0.9)] lg:h-full lg:w-72 lg:border-b-0 lg:border-r">
         <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.24),_transparent_70%)] pointer-events-none" />
         <div className="flex min-h-[5.5rem] items-center border-b border-white/10 px-4 py-4 sm:px-6 lg:h-28 lg:px-8">
           <h1 className="flex items-center gap-3 text-xl font-black tracking-tighter text-white">
@@ -105,11 +105,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      <main className="relative flex-1 overflow-auto bg-[#040816]">
+      <main className="relative flex-1 overflow-y-auto bg-[#040816]">
         <div className="pointer-events-none absolute right-[-10%] top-[-10%] h-[40%] w-[40%] rounded-full bg-blue-600/8 blur-[120px]" />
         <div className="pointer-events-none absolute bottom-[-10%] left-[-10%] h-[30%] w-[30%] rounded-full bg-cyan-400/6 blur-[110px]" />
         
-        <div className="relative z-10 mx-auto max-w-7xl p-4 sm:p-6 lg:p-10">
+        <div className="relative z-10 w-full p-4 sm:p-5 lg:p-7">
           {children}
         </div>
       </main>

@@ -280,15 +280,24 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
                     descuento: Number(fd.get('descuento') || 0),
                   };
                   if (tipoLinea === 'REFACCION') {
-                    if (!selectedRefaccionId) {
+                    let refaccionId = selectedRefaccionId;
+                    if (!refaccionId && refaccionSearch) {
+                      const matched = refacciones?.results?.find(
+                        (r: any) => r.sku.toUpperCase() === refaccionSearch.trim().toUpperCase()
+                      );
+                      if (matched) {
+                        refaccionId = matched.id;
+                      }
+                    }
+                    if (!refaccionId) {
                       toast.current?.show({
                         severity: 'warn',
                         summary: 'Selecciona una refacción',
-                        detail: 'Debes elegir una pieza del inventario antes de agregarla.',
+                        detail: 'Debes elegir una pieza del catálogo o ingresar un SKU válido.',
                       });
                       return;
                     }
-                    data.refaccionId = selectedRefaccionId;
+                    data.refaccionId = refaccionId;
                   } else {
                     data.descripcion = String(fd.get('descripcion'));
                     data.precioUnitario = Number(fd.get('precioUnitario'));
@@ -301,7 +310,16 @@ export default function OrdenDetallePage({ params }: { params: { id: string } })
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Seleccionar Refacción del Inventario</label>
                     <InputText
                       value={refaccionSearch}
-                      onChange={(e) => setRefaccionSearch(e.target.value.toUpperCase())}
+                      onChange={(e) => {
+                        const val = e.target.value.toUpperCase();
+                        setRefaccionSearch(val);
+                        const matched = refacciones?.results?.find(
+                          (r: any) => r.sku.toUpperCase() === val.trim()
+                        );
+                        if (matched) {
+                          setSelectedRefaccionId(matched.id);
+                        }
+                      }}
                       className="rounded-2xl border-slate-100 bg-slate-50/50 p-4 font-semibold shadow-inner"
                       placeholder="Buscar pieza por SKU o nombre..."
                     />

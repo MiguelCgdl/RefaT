@@ -17,6 +17,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const { httpAdapter } = this.httpAdapterHost;
     const ctx = host.switchToHttp();
+    const req = ctx.getRequest();
 
     const httpStatus =
       exception instanceof HttpException
@@ -38,8 +39,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     }
     
+    const method = req ? httpAdapter.getRequestMethod(req) : 'UNKNOWN';
+    const url = req ? httpAdapter.getRequestUrl(req) : 'UNKNOWN';
+    const headers = req ? req.headers : {};
+    const authHeader = headers?.authorization;
+    const authInfo = authHeader 
+      ? `Present (starts with Bearer: ${authHeader.startsWith('Bearer ')}, length: ${authHeader.length})` 
+      : 'Missing';
+
     this.logger.error(
-      `Exception [Status ${httpStatus}]: ${message}`,
+      `Exception [Status ${httpStatus}] on ${method} ${url} | Auth: ${authInfo}: ${message}`,
       exception instanceof Error ? exception.stack : ''
     );
 
