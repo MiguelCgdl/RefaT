@@ -13,15 +13,31 @@ export class KanbanService {
     });
   }
 
-  async getBoards(userId: number): Promise<KanbanBoard[]> {
-    return this.prisma.kanbanBoard.findMany({ where: { creadorId: userId } });
+  async getBoards(userId: number) {
+    return this.prisma.kanbanBoard.findMany({
+      where: { creadorId: userId },
+      include: {
+        columnas: {
+          include: { tarjetas: true },
+          orderBy: { orden: 'asc' },
+        },
+      },
+    });
   }
 
-  async getBoard(id: number): Promise<KanbanBoard> {
-    return this.prisma.kanbanBoard.findUniqueOrThrow({ where: { id } });
+  async getBoard(id: number) {
+    return this.prisma.kanbanBoard.findUniqueOrThrow({
+      where: { id },
+      include: {
+        columnas: {
+          include: { tarjetas: true },
+          orderBy: { orden: 'asc' },
+        },
+      },
+    });
   }
 
-    async updateBoard(id: number, title: string): Promise<KanbanBoard> {
+    async updateBoard(id: number, title?: string): Promise<KanbanBoard> {
       return this.prisma.kanbanBoard.update({
         where: { id },
         data: { titulo: title },
@@ -39,7 +55,7 @@ export class KanbanService {
       });
     }
 
-    async updateColumn(id: number, title: string): Promise<KanbanColumn> {
+    async updateColumn(id: number, title?: string): Promise<KanbanColumn> {
       return this.prisma.kanbanColumn.update({ where: { id }, data: { titulo: title } });
     }
 
@@ -55,7 +71,11 @@ export class KanbanService {
   }
 
   async updateCard(id: number, data: { title?: string; description?: string; order?: number }): Promise<KanbanCard> {
-    return this.prisma.kanbanCard.update({ where: { id }, data });
+    return this.prisma.kanbanCard.update({ where: { id }, data: {
+      titulo: data.title,
+      descripcion: data.description,
+      orden: data.order
+    } });
   }
 
   async deleteCard(id: number): Promise<KanbanCard> {

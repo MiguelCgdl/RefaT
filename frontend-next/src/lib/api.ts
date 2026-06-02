@@ -44,6 +44,14 @@ export const login = (username: string, password: string) =>
     body: JSON.stringify({ username, password }),
   });
 
+export const getUsers = (token: string) => request<any[]>('/usuarios', { token });
+export const createUser = (token: string, data: Record<string, unknown>) =>
+  request<any>('/usuarios', { method: 'POST', body: JSON.stringify(data), token });
+export const updateUser = (token: string, id: number, data: Record<string, unknown>) =>
+  request<any>(`/usuarios/${id}`, { method: 'PATCH', body: JSON.stringify(data), token });
+export const deleteUser = (token: string, id: number) =>
+  request<void>(`/usuarios/${id}`, { method: 'DELETE', token });
+
 export const getClientes = (token: string) => request<PaginatedResponse<Cliente>>('/clientes/', { token });
 export const createCliente = (token: string, data: Partial<Cliente>) =>
   request<Cliente>('/clientes/', { method: 'POST', body: JSON.stringify(data), token });
@@ -102,3 +110,11 @@ export const exportPdfPresupuesto = (token: string, id: number) =>
   request<Blob>(`/reportes/presupuestos/${id}/pdf`, { token, responseType: 'blob' });
 export const exportRefaccionesExcel = (token: string) =>
   request<Blob>('/reportes/refacciones/excel', { token, responseType: 'blob' });
+
+export const getBoards = (token: string) => request<any[]>('/kanban/boards', { token });
+export const getBoard = (token: string, id: number) => request<any>(`/kanban/boards/${id}`, { token });
+export const createBoard = (token: string, data: Record<string, unknown>) => request<any>('/kanban/boards', { method: 'POST', body: JSON.stringify(data), token });
+export const createColumn = (token: string, data: Record<string, unknown>) => request<any>('/kanban/columns', { method: 'POST', body: JSON.stringify(data), token });
+export const createCard = (token: string, data: Record<string, unknown>) => request<any>('/kanban/cards', { method: 'POST', body: JSON.stringify(data), token });
+export const updateCard = (token: string, id: number, data: Record<string, unknown>) => request<any>(`/kanban/cards/${id}`, { method: 'PATCH', body: JSON.stringify(data), token });
+export const deleteCard = (token: string, id: number) => request<void>(`/kanban/cards/${id}`, { method: 'DELETE', token });

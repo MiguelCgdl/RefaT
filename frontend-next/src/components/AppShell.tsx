@@ -42,8 +42,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#040816] lg:flex-row">
-      <div className="relative z-20 flex w-full flex-col border-b border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.96)_0%,rgba(10,16,32,0.96)_100%)] text-slate-300 shadow-[24px_0_80px_-30px_rgba(0,0,0,0.9)] lg:h-full lg:w-72 lg:flex-shrink-0 lg:border-b-0 lg:border-r">
+    <div className="flex h-screen w-full flex-col overflow-hidden bg-[#040816] lg:flex-row">
+      <div className="relative z-20 flex w-full flex-col border-b border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.96)_0%,rgba(10,16,32,0.96)_100%)] text-slate-300 shadow-[24px_0_80px_-30px_rgba(0,0,0,0.9)] lg:h-full lg:w-72 lg:flex-shrink-0 lg:border-b-0 lg:border-r hidden lg:flex">
         <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.24),_transparent_70%)] pointer-events-none" />
         <div className="flex min-h-[5.5rem] items-center border-b border-white/10 px-4 py-4 sm:px-6 lg:h-28 lg:px-8">
           <h1 className="flex items-center gap-3 text-xl font-black tracking-tighter text-white">
@@ -105,14 +105,50 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      <main className="relative flex-1 overflow-y-auto bg-[#040816]">
+      <main className="relative flex-1 overflow-y-auto bg-[#040816] pb-24 lg:pb-0">
         <div className="pointer-events-none absolute right-[-10%] top-[-10%] h-[40%] w-[40%] rounded-full bg-blue-600/8 blur-[120px]" />
         <div className="pointer-events-none absolute bottom-[-10%] left-[-10%] h-[30%] w-[30%] rounded-full bg-cyan-400/6 blur-[110px]" />
         
+        {/* Header mobile */}
+        <div className="flex items-center justify-between p-4 border-b border-white/10 lg:hidden bg-[#0a1020]">
+          <h1 className="flex items-center gap-2 text-xl font-black text-white">
+            <img src="/logo.png" alt="NorthLub" className="h-6" />
+            <span>North<span className="text-blue-400">Lub</span></span>
+          </h1>
+          <button onClick={() => { logout(); router.push('/login'); }} className="text-slate-400 hover:text-red-400">
+             <LogOut className="w-5 h-5" />
+          </button>
+        </div>
+
         <div className="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-5 lg:p-8 lg:mx-0">
           {children}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-white/10 bg-[#0a1020]/90 px-2 py-3 backdrop-blur-xl lg:hidden pb-safe">
+        {navigation.map((item) => {
+          const isActive =
+            item.href === '/taller'
+              ? pathname.startsWith('/taller') || pathname.startsWith('/ordenes') || pathname.startsWith('/presupuestos')
+              : item.href === '/almacen'
+                ? pathname.startsWith('/almacen') || pathname.startsWith('/refacciones')
+                : pathname.startsWith(item.href);
+
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl p-2 transition-all ${
+                isActive ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              <item.icon className={`h-5 w-5 ${isActive ? 'scale-110' : ''}`} />
+              <span className="text-[10px] font-bold tracking-tight">{item.name}</span>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }

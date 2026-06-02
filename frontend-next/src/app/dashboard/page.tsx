@@ -174,7 +174,7 @@ export default function DashboardPage() {
         </Link>
 
         {/* Vehículos en Taller */}
-        <Link href="/clientes" className="block">
+        <Link href="/taller" className="block">
           <Card className="rounded-[2rem] border-none shadow-3d bg-white/80 backdrop-blur-xl hover:shadow-3d-hover transition-all duration-500 group cursor-pointer h-full">
             <div className="flex items-center gap-4 p-1">
               <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all duration-500 shadow-inner ring-1 ring-emerald-500/10 flex-shrink-0">
@@ -223,8 +223,9 @@ export default function DashboardPage() {
             {data?.ordenes_por_estado.map((item) => {
               const meta = getMeta(item.estado);
               return (
-                <div
+                <Link
                   key={item.estado}
+                  href="/ordenes"
                   className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl hover:bg-slate-100 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border border-transparent hover:border-slate-100 group"
                 >
                   <div className="flex items-center gap-3">
@@ -240,7 +241,7 @@ export default function DashboardPage() {
                       <TrendingUp className="w-4 h-4 opacity-50 group-hover:opacity-100" />
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
             {!data?.ordenes_por_estado?.length && (
@@ -268,8 +269,8 @@ export default function DashboardPage() {
             <DonutChart items={activeStates} />
 
             {token && (
-            <Link href="/admin" className="inline-block mt-4 px-4 py-2 bg-purple-600 text-white rounded-[1rem] hover:bg-purple-700 transition-colors">
-              Panel de Administración
+            <Link href="/taller" className="inline-block mt-4 px-4 py-2 bg-purple-600 text-white rounded-[1rem] hover:bg-purple-700 transition-colors shadow-lg">
+              Ver Órdenes en Taller
             </Link>
             )}
 

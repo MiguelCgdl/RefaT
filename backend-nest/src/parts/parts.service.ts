@@ -13,12 +13,12 @@ export class PartsService {
     id: number;
     sku: string;
     nombre: string;
-    categoria: string;
+    categoria: string | null;
     costo: Prisma.Decimal;
     precioVenta: Prisma.Decimal;
     stock: Prisma.Decimal;
     stockMinimo: Prisma.Decimal;
-    ubicacion: string;
+    ubicacion: string | null;
     activo: boolean;
     creadoEn: Date;
     actualizadoEn: Date;
@@ -27,12 +27,12 @@ export class PartsService {
       id: r.id,
       sku: r.sku,
       nombre: r.nombre,
-      categoria: r.categoria,
+      categoria: r.categoria || '',
       costo: r.costo.toString(),
       precio_venta: r.precioVenta.toString(),
       stock: r.stock.toString(),
       stock_minimo: r.stockMinimo.toString(),
-      ubicacion: r.ubicacion,
+      ubicacion: r.ubicacion || '',
       activo: r.activo,
       bajo_stock: Number(r.stock) <= Number(r.stockMinimo),
       creado_en: r.creadoEn,

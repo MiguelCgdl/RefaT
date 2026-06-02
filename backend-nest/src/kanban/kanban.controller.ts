@@ -1,30 +1,29 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { KanbanService } from './kanban.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
-import { CreateColumnDto } from './dto/create-column.dto';
-import { UpdateColumnDto } from './dto/update-column.dto';
-import { CreateCardDto } from './dto/create-card.dto';
-import { UpdateCardDto } from './dto/update-card.dto';
+import { CreateColumnDto, UpdateColumnDto, CreateCardDto, UpdateCardDto } from './dto/create-column.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('kanban')
-@Roles('SuperAdmin')
+@Roles('ADMIN', 'MECANICO', 'ASESOR')
 export class KanbanController {
   constructor(private readonly kanbanService: KanbanService) {}
 
   // Boards
   @Post('boards')
-  async createBoard(@Body() dto: CreateBoardDto) {
-    const userId = 0; // TODO: extract from request (req.user.id)
+  async createBoard(@Req() req: any, @Body() dto: CreateBoardDto) {
+    const userId = req.user?.sub ?? 1;
     return this.kanbanService.createBoard(dto.title, userId);
   }
 
   @Get('boards')
-  async getBoards(@Query('userId') userId: number) {
+  async getBoards(@Req() req: any) {
+    const userId = req.user?.sub ?? 1;
     return this.kanbanService.getBoards(userId);
   }
 

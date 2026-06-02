@@ -248,12 +248,8 @@ export class QuotesService {
     if (method === 'email' && !cliente.email) {
       throw new BadRequestException('El cliente no tiene un correo electrónico registrado.');
     }
-    if (method === 'whatsapp' && !cliente.telefono) {
-      throw new BadRequestException('El cliente no tiene un teléfono registrado.');
-    }
-
     // TODO: In a real app, you would send the email or whatsapp here via external APIs.
-    console.log(`Enviando presupuesto ${presupuesto.id} a ${cliente.nombre} vía ${method}...`);
+    console.log(`Enviando presupuesto ${presupuesto.id} a ${cliente.username} vía ${method}...`);
 
     const actualizado = await this.prisma.presupuesto.update({
       where: { id },

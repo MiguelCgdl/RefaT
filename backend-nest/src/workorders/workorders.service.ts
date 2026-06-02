@@ -28,7 +28,7 @@ export class WorkordersService {
     fechaCierre: Date | null;
     estado: string;
     quejaCliente: string;
-    diagnostico: string;
+    diagnostico: string | null;
     mecanicoId: number | null;
     prioridad: string;
     creadoEn: Date;
@@ -92,8 +92,8 @@ export class WorkordersService {
           quejaCliente: dto.quejaCliente,
           diagnostico: dto.diagnostico ?? '',
           mecanicoId: dto.mecanicoId,
-          estado: dto.estado,
-          prioridad: dto.prioridad,
+          estado: dto.estado ?? 'RECIBIDO',
+          prioridad: dto.prioridad ?? 'NORMAL',
           fechaEstimada: dto.fechaEstimada ? new Date(dto.fechaEstimada) : undefined,
         },
         include: {

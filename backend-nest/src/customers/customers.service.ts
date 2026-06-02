@@ -10,29 +10,42 @@ export class CustomersService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(page = 1, pageSize = 20) {
-    const where: Prisma.ClienteWhereInput = {};
+    const where: Prisma.UsuarioWhereInput = { rol: 'CLIENTE' };
     const [total, items] = await this.prisma.$transaction([
-      this.prisma.cliente.count({ where }),
-      this.prisma.cliente.findMany({ where, orderBy: { nombre: 'asc' }, ...skipTake(page, pageSize) }),
+      this.prisma.usuario.count({ where }),
+      this.prisma.usuario.findMany({ where, orderBy: { username: 'asc' }, ...skipTake(page, pageSize) }),
     ]);
     return paginated(items, total, page, pageSize);
   }
 
   async findOne(id: number) {
-    const item = await this.prisma.cliente.findUnique({ where: { id } });
+    const item = await this.prisma.usuario.findUnique({ where: { id, rol: 'CLIENTE' } });
     if (!item) throw new NotFoundException('Cliente no encontrado');
     return item;
   }
 
   create(dto: CreateClienteDto) {
-    const { vehiculo, ...clienteData } = dto;
-    return this.prisma.cliente.create({
+    const { vehiculo, nombre, email, activo } = dto;
+    return this.prisma.usuario.create({
       data: {
-        ...clienteData,
+        username: nombre + '_' + Date.now().toString(),
+        email: email || `cliente_${Date.now()}@refa.local`,
+        passwordHash: 'dummy',
+        rol: 'CLIENTE',
+        activo: activo ?? true,
         ...(vehiculo
           ? {
               vehiculos: {
-                create: vehiculo,
+                create: [{
+                  marca: vehiculo.marca,
+                  modelo: vehiculo.modelo,
+                  serieVin: vehiculo.serieVin || '',
+                  anio: vehiculo.anio,
+                  placas: vehiculo.placas,
+                  color: vehiculo.color || '',
+                  kilometrajeActual: vehiculo.kilometrajeActual || 0,
+                  notas: vehiculo.notas || ''
+                }],
               },
             }
           : {}),
@@ -45,12 +58,15 @@ export class CustomersService {
 
   async update(id: number, dto: UpdateClienteDto) {
     await this.findOne(id);
-    return this.prisma.cliente.update({ where: { id }, data: dto });
+    return this.prisma.usuario.update({ where: { id }, data: { 
+      email: dto.email, 
+      activo: dto.activo 
+    } });
   }
 
   async remove(id: number) {
     await this.findOne(id);
-    await this.prisma.cliente.delete({ where: { id } });
+    await this.prisma.usuario.delete({ where: { id } });
     return { message: 'Cliente eliminado' };
   }
 }

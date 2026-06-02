@@ -12,19 +12,24 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.usuario.findUnique({ where: { username: dto.username } });
-    if (!user?.activo) throw new UnauthorizedException('Credenciales inválidas');
+    try {
+      const user = await this.prisma.usuario.findUnique({ where: { username: dto.username } });
+      if (!user || !user.activo) throw new UnauthorizedException('Credenciales inválidas');
 
-    const ok = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!ok) throw new UnauthorizedException('Credenciales inválidas');
+      const ok = await bcrypt.compare(dto.password, user.passwordHash);
+      if (!ok) throw new UnauthorizedException('Credenciales inválidas');
 
-    const payload = { sub: user.id, username: user.username, rol: user.rol };
-    const accessToken = await this.jwt.signAsync(payload);
+      const payload = { sub: user.id, username: user.username, rol: user.rol };
+      const accessToken = await this.jwt.signAsync(payload);
 
-    return {
-      accessToken,
-      token: accessToken,
-      user: { id: user.id, username: user.username, rol: user.rol },
-    };
+      return {
+        accessToken,
+        token: accessToken,
+        user: { id: user.id, username: user.username, rol: user.rol },
+      };
+    } catch (error) {
+      console.error('AuthService login error:', error);
+      throw error;
+    }
   }
 }

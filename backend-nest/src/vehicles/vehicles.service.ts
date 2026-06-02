@@ -22,12 +22,12 @@ export class VehiclesService {
     activo: boolean;
     creadoEn: Date;
     actualizadoEn: Date;
-    cliente?: { nombre: string };
+    cliente?: { username: string };
   }) {
     return {
       id: v.id,
       cliente: v.clienteId,
-      cliente_nombre: v.cliente?.nombre,
+      cliente_nombre: v.cliente?.username,
       marca: v.marca,
       modelo: v.modelo,
       serie_vin: v.serieVin,
@@ -46,7 +46,7 @@ export class VehiclesService {
     const [total, rows] = await this.prisma.$transaction([
       this.prisma.vehiculo.count(),
       this.prisma.vehiculo.findMany({
-        include: { cliente: { select: { nombre: true } } },
+        include: { cliente: { select: { username: true } } },
         orderBy: [{ marca: 'asc' }, { modelo: 'asc' }],
         ...skipTake(page, pageSize),
       }),
@@ -57,7 +57,7 @@ export class VehiclesService {
   async findOne(id: number) {
     const row = await this.prisma.vehiculo.findUnique({
       where: { id },
-      include: { cliente: { select: { nombre: true } } },
+      include: { cliente: { select: { username: true } } },
     });
     if (!row) throw new NotFoundException('Vehículo no encontrado');
     return this.mapVehiculo(row);
@@ -95,7 +95,7 @@ export class VehiclesService {
         notas: dto.notas ?? '',
         activo: dto.activo ?? true,
       },
-      include: { cliente: { select: { nombre: true } } },
+      include: { cliente: { select: { username: true } } },
     });
     return this.mapVehiculo(row);
   }
@@ -116,7 +116,7 @@ export class VehiclesService {
         notas: dto.notas,
         activo: dto.activo,
       },
-      include: { cliente: { select: { nombre: true } } },
+      include: { cliente: { select: { username: true } } },
     });
     return this.mapVehiculo(row);
   }

@@ -9,6 +9,206 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// ---------- ENUMS ----------
+enum RolUsuario {
+  ADMIN
+  MECANICO
+  RECEPCION
+  ALMACEN
+  CLIENTE
+}
+
+enum EstadoOrden {
+  RECIBIDO
+  DIAGNOSTICO
+  ESPERA_APROBACION
+  EN_PROCESO
+  LISTO
+  ENTREGADO
+  CANCELADO
+}
+
+enum PrioridadOrden {
+  BAJA
+  NORMAL
+  ALTA
+  URGENTE
+}
+
+enum EstadoPresupuesto {
+  BORRADOR
+  ENVIADO
+  APROBADO
+  RECHAZADO
+  VENCIDO
+}
+
+enum TipoLineaPresupuesto {
+  SERVICIO
+  REFACCION
+}
+
+enum TipoMovimientoInventario {
+  ENTRADA
+  SALIDA
+  AJUSTE
+}
+
+enum TipoNotificacion {
+  STOCK_BAJO
+  OT_LISTA
+  PRESUPUESTO
+  GENERAL
+}
+
+// ---------- MODELS ----------
+
+model Usuario {
+  id             Int        @id @default(autoincrement())
+  username       String     @unique
+  email          String     @unique
+  passwordHash   String     @map("password_hash")
+  rol            RolUsuario
+  activo         Boolean    @default(true)
+  creadoEn       DateTime   @default(now()) @map("creado_en")
+  actualizadoEn  DateTime   @updatedAt @map("actualizado_en")
+
+  ordenesTrabajo OrdenTrabajo[] @relation("MecanicoOrdenes")
+  notificaciones Notificacion[]
+  kanbanBoardsCreados KanbanBoard[] @relation("CreadorKanban")
+  kanbanCardsAsignadas KanbanCard[] @relation("AsignadoAKanban")
+  vehiculos Vehiculo[] @relation("ClienteVehiculo")
+
+  @@map("usuarios")
+}
+
+model Vehiculo {
+  id                 Int        @id @default(autoincrement())
+  clienteId          Int        @map("cliente_id")
+  marca              String
+  modelo             String
+  serieVin           String     @map("serie_vin")
+  anio               Int
+  placas             String     @unique
+  color              String
+  kilometrajeActual  Int        @map("kilometraje_actual")
+  notas              String
+  activo             Boolean    @default(true)
+  creadoEn           DateTime   @default(now()) @map("creado_en")
+  actualizadoEn      DateTime   @updatedAt @map("actualizado_en")
+
+  cliente            Usuario    @relation("ClienteVehiculo", fields: [clienteId], references: [id])
+  ordenesTrabajo     OrdenTrabajo[]
+
+  @@map("vehiculos")
+}
+
+model OrdenTrabajo {
+  id             Int          @id @default(autoincrement())
+  folio          String       @unique
+  vehiculoId     Int          @map("vehiculo_id")
+  fechaIngreso   DateTime     @default(now()) @map("fecha_ingreso")
+  fechaEstimada  DateTime?    @map("fecha_estimada")
+  fechaCierre    DateTime?    @map("fecha_cierre")
+  estado         EstadoOrden
+  quejaCliente   String       @map("queja_cliente")
+  diagnostico    String
+  mecanicoId     Int?         @map("mecanico_id")
+  prioridad      PrioridadOrden
+  creadoEn       DateTime     @default(now()) @map("creado_en")
+  actualizadoEn  DateTime     @updatedAt @map("actualizado_en")
+
+  vehiculo       Vehiculo     @relation(fields: [vehiculoId], references: [id])
+  mecanico       Usuario?     @relation("MecanicoOrdenes", fields: [mecanicoId], references: [id])
+  presupuestos   Presupuesto[]
+  movimientos    MovimientoInventario[]
+
+  @@map("ordenes_trabajo")
+}
+
+model Presupuesto {
+  id             Int                 @id @default(autoincrement())
+  ordenId        Int                 @map("orden_id")
+  version        Int                 @default(1)
+  estado         EstadoPresupuesto   @default(BORRADOR)
+  subtotal       Decimal             @default(0)
+  iva            Decimal             @default(0)
+  total          Decimal             @default(0)
+  aprobadoEn     DateTime?           @map("aprobado_en")
+  creadoEn       DateTime            @default(now()) @map("creado_en")
+  actualizadoEn  DateTime            @updatedAt @map("actualizado_en")
+
+  orden          OrdenTrabajo        @relation(fields: [ordenId], references: [id])
+  lineas         LineaPresupuesto[]
+
+  @@map("presupuestos")
+}
+
+model LineaPresupuesto {
+  id             Int                  @id @default(autoincrement())
+  presupuestoId  Int                  @map("presupuesto_id")
+  tipo           TipoLineaPresupuesto
+  descripcion    String
+  refaccionId    Int?                 @map("refaccion_id")
+  cantidad       Decimal              @default(1)
+  precioUnitario Decimal              @map("precio_unitario")
+  descuento      Decimal              @default(0)
+
+  presupuesto    Presupuesto          @relation(fields: [presupuestoId], references: [id])
+  refaccion      Refaccion?           @relation(fields: [refaccionId], references: [id])
+
+  @@map("lineas_presupuesto")
+}
+
+model Refaccion {
+  id             Int        @id @default(autoincrement())
+  sku            String     @unique
+  nombre         String
+  categoria      String?
+  costo          Decimal    @default(0)
+  precioVenta    Decimal    @map("precio_venta")
+  stock          Decimal    @default(0)
+  stockMinimo    Decimal    @default(0) @map("stock_minimo")
+  ubicacion      String?
+  activo         Boolean    @default(true)
+  creadoEn       DateTime   @default(now()) @map("creado_en")
+  actualizadoEn  DateTime   @updatedAt @map("actualizado_en")
+
+  lineasPresupuesto LineaPresupuesto[]
+  movimientos       MovimientoInventario[]
+
+  @@map("refacciones")
+}
+
+model MovimientoInventario {
+  id             Int                      @id @default(autoincrement())
+  refaccionId    Int                      @map("refaccion_id")
+  tipo           TipoMovimientoInventario
+  cantidad       Decimal
+  ordenId        Int?                     @map("orden_id")
+  notas          String?
+  creadoEn       DateTime                 @default(now()) @map("creado_en")
+
+  refaccion      Refaccion                @relation(fields: [refaccionId], references: [id])
+  orden          OrdenTrabajo?            @relation(fields: [ordenId], references: [id])
+
+  @@map("movimientos_inventario")
+}
+
+model Notificacion {
+  id             Int              @id @default(autoincrement())
+  usuarioId      Int              @map("usuario_id")
+  tipo           TipoNotificacion
+  titulo         String
+  mensaje        String
+  leida          Boolean          @default(false)
+  creadoEn       DateTime         @default(now()) @map("creado_en")
+
+  usuario        Usuario          @relation(fields: [usuarioId], references: [id])
+
+  @@map("notificaciones")
+}
+
 // ---------- KANBAN MODELS ----------
 model KanbanBoard {
   id          Int           @id @default(autoincrement())
@@ -17,7 +217,7 @@ model KanbanBoard {
   actualizadoEn DateTime    @updatedAt @map("actualizado_en")
   columnas    KanbanColumn[]
   creadorId   Int           @map("creador_id")
-  creador     Usuario       @relation(fields: [creadorId], references: [id])
+  creador     Usuario       @relation("CreadorKanban", fields: [creadorId], references: [id])
 
   @@map("kanban_board")
 }
@@ -39,51 +239,11 @@ model KanbanCard {
   descripcion String?
   orden       Int           @default(0)
   columnaId   Int           @map("columna_id")
-  columna     KanbanColumn   @relation(fields: [columnaId], references: [id])
+  columna     KanbanColumn  @relation(fields: [columnaId], references: [id])
   asignadoAId Int?          @map("asignado_a_id")
-  asignadoA   Usuario?      @relation(fields: [asignadoAId], references: [id])
+  asignadoA   Usuario?      @relation("AsignadoAKanban", fields: [asignadoAId], references: [id])
   creadoEn    DateTime      @default(now()) @map("creado_en")
   actualizadoEn DateTime    @updatedAt @map("actualizado_en")
 
   @@map("kanban_card")
-}
-
-// ---------- USER & ROLE MODELS ----------
-model Usuario {
-  id            Int        @id @default(autoincrement())
-  username      String     @unique
-  email         String     @unique
-  password      String
-  activo        Boolean    @default(true)
-  rolId         Int
-  rol           RolUsuario @relation(fields: [rolId], references: [id])
-  // relaciones opcionales
-  kanbanBoards  KanbanBoard[]
-  kanbanCards   KanbanCard[]
-}
-
-model RolUsuario {
-  id          Int         @id @default(autoincrement())
-  nombre      String      @unique
-  descripcion String?
-  usuarios    Usuario[]
-  permissions RolPermission[]
-}
-
-// ---------- PERMISSION MODELS ----------
-model Permission {
-  id          Int           @id @default(autoincrement())
-  nombre      String        @unique
-  descripcion String?
-  roles       RolPermission[]
-}
-
-model RolPermission {
-  rolId        Int
-  permissionId Int
-
-  rol          RolUsuario   @relation(fields: [rolId], references: [id])
-  permission   Permission   @relation(fields: [permissionId], references: [id])
-
-  @@id([rolId, permissionId])
 }

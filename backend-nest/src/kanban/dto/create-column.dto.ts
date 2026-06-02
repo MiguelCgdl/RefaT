@@ -3,18 +3,15 @@ import { IsInt, IsString, IsOptional } from 'class-validator';
 
 export class CreateColumnDto {
   @IsInt()
-  boardId: number;
+  boardId!: number;
 
   @IsString()
-  title: string;
+  title!: string;
 
   @IsOptional()
   @IsInt()
   order?: number;
 }
-
-// src/kanban/dto/update-column.dto.ts
-import { IsString, IsOptional, IsInt } from 'class-validator';
 
 export class UpdateColumnDto {
   @IsOptional()
@@ -26,15 +23,12 @@ export class UpdateColumnDto {
   order?: number;
 }
 
-// src/kanban/dto/create-card.dto.ts
-import { IsInt, IsString, IsOptional } from 'class-validator';
-
 export class CreateCardDto {
   @IsInt()
-  columnId: number;
+  columnId!: number;
 
   @IsString()
-  title: string;
+  title!: string;
 
   @IsOptional()
   @IsString()
@@ -44,9 +38,6 @@ export class CreateCardDto {
   @IsInt()
   order?: number;
 }
-
-// src/kanban/dto/update-card.dto.ts
-import { IsString, IsOptional, IsInt } from 'class-validator';
 
 export class UpdateCardDto {
   @IsOptional()
