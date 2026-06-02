@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardResumen } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { Activity, AlertTriangle, LayoutDashboard, TrendingUp, Users, Plus, Car, Wrench } from 'lucide-react';
+import { Activity, AlertTriangle, LayoutDashboard, TrendingUp, Users, Plus, Car, Wrench, Shield } from 'lucide-react';
 import { Card } from 'primereact/card';
 import { ProgressBar } from 'primereact/progressbar';
 import Link from 'next/link';
@@ -267,6 +267,12 @@ export default function DashboardPage() {
           <div className="px-6 pb-8 pt-2">
             <DonutChart items={activeStates} />
 
+            {token && (
+            <Link href="/admin" className="inline-block mt-4 px-4 py-2 bg-purple-600 text-white rounded-[1rem] hover:bg-purple-700 transition-colors">
+              Panel de Administración
+            </Link>
+            )}
+
             {/* Summary row */}
             <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between">
               <div className="text-center flex-1">
@@ -326,6 +332,10 @@ export default function DashboardPage() {
               <Car className="w-5 h-5 text-slate-300 group-hover:text-emerald-500 transition-colors" />
             </button>
           </div>
+<button onClick={() => window.location.href = '/admin'} className="group flex items-center justify-between p-5 bg-slate-50/50 text-slate-700 rounded-[1.5rem] hover:bg-slate-100 border border-slate-100 hover:border-indigo-200 transition-all duration-300 active:scale-95 shadow-sm">
+  <span className="font-black text-base tracking-tight">Panel Admin</span>
+   <Shield className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+</button>
         </Card>
       </div>
     </div>

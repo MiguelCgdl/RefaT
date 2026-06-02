@@ -1,5 +1,4 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { RolUsuario } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -11,7 +10,7 @@ export class UsersController {
   constructor(private users: UsersService) {}
 
   @Get()
-  @Roles(RolUsuario.ADMIN)
+  @Roles('ADMIN')
   list() {
     return this.users.findAll();
   }

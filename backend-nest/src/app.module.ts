@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { CustomersModule } from './customers/customers.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { WorkordersModule } from './workorders/workorders.module';
+import { KanbanModule } from './kanban/kanban.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { PartsModule } from './parts/parts.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -32,6 +33,7 @@ import { HealthController } from './common/health.controller';
     CustomersModule,
     VehiclesModule,
     WorkordersModule,
+    KanbanModule,
     QuotesModule,
     PartsModule,
     NotificationsModule,
