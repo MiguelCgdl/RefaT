@@ -40,7 +40,6 @@ function DonutChart({ items }: { items: { estado: string; total: number }[] }) {
   const r = 60;
   const stroke = 22;
 
-  // Build arcs
   const circumference = 2 * Math.PI * r;
   let offset = 0;
 
@@ -55,7 +54,6 @@ function DonutChart({ items }: { items: { estado: string; total: number }[] }) {
 
   return (
     <div className="flex flex-col sm:flex-row items-center gap-6">
-      {/* SVG donut */}
       <div className="relative flex-shrink-0">
         <svg width={size} height={size} className="rotate-[-90deg]">
           <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f1f5f9" strokeWidth={stroke} />
@@ -75,14 +73,11 @@ function DonutChart({ items }: { items: { estado: string; total: number }[] }) {
             />
           ))}
         </svg>
-        {/* Centre label */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-3xl font-black text-slate-900">{total}</span>
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">vehículos</span>
         </div>
       </div>
-
-      {/* Legend */}
       <div className="flex flex-col gap-2 flex-1 min-w-0">
         {arcs.map((arc, i) => {
           const meta = getMeta(arc.estado);
@@ -108,12 +103,21 @@ function DonutChart({ items }: { items: { estado: string; total: number }[] }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard'],
     queryFn: () => getDashboardResumen(token!),
     enabled: Boolean(token),
   });
+
+  const isAdmin = user?.rol === 'ADMIN';
+  const isAsesor = user?.rol === 'ASESOR';
+  const isMecanico = user?.rol === 'MECANICO';
+
+  // What the mechanic sees on the KPI row
+  const showStock = isAdmin || isAsesor;
+  const showClientes = isAdmin || isAsesor;
+  const showAdmin = isAdmin;
 
   if (isLoading) {
     return (
@@ -136,7 +140,6 @@ export default function DashboardPage() {
     );
   }
 
-  // Filter out delivered/cancelled for the chart
   const activeStates = (data?.ordenes_por_estado ?? []).filter(
     (o) => !['entregado', 'cancelado'].includes(o.estado.toLowerCase())
   );
@@ -154,10 +157,10 @@ export default function DashboardPage() {
         <p className="text-slate-500 font-medium text-sm sm:text-base ml-1">Estado operativo y métricas críticas del taller.</p>
       </div>
 
-      {/* ── KPI Cards — 1 col mobile / 2 col sm / 3 col lg ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      {/* ── KPI Cards ── */}
+      <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 ${showStock ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
 
-        {/* Órdenes Activas */}
+        {/* Órdenes Activas — always visible */}
         <Link href="/ordenes" className="block">
           <Card className="rounded-[2rem] border-none shadow-3d bg-white/80 backdrop-blur-xl hover:shadow-3d-hover transition-all duration-500 group cursor-pointer h-full">
             <div className="flex items-center gap-4 p-1">
@@ -173,7 +176,7 @@ export default function DashboardPage() {
           </Card>
         </Link>
 
-        {/* Vehículos en Taller */}
+        {/* Vehículos en Taller — always visible */}
         <Link href="/taller" className="block">
           <Card className="rounded-[2rem] border-none shadow-3d bg-white/80 backdrop-blur-xl hover:shadow-3d-hover transition-all duration-500 group cursor-pointer h-full">
             <div className="flex items-center gap-4 p-1">
@@ -189,27 +192,29 @@ export default function DashboardPage() {
           </Card>
         </Link>
 
-        {/* Bajo Stock */}
-        <Link href="/refacciones" className="block sm:col-span-2 lg:col-span-1">
-          <Card className="rounded-[2rem] border-none shadow-3d bg-white/80 backdrop-blur-xl hover:shadow-3d-hover transition-all duration-500 group cursor-pointer h-full">
-            <div className="flex items-center gap-4 p-1">
-              <div className="p-4 bg-red-50 text-red-600 rounded-2xl group-hover:bg-red-600 group-hover:text-white transition-all duration-500 shadow-inner ring-1 ring-red-500/10 flex-shrink-0">
-                <AlertTriangle className="w-7 h-7" />
+        {/* Bajo Stock — only for ADMIN and ASESOR */}
+        {showStock && (
+          <Link href="/refacciones" className="block sm:col-span-2 lg:col-span-1">
+            <Card className="rounded-[2rem] border-none shadow-3d bg-white/80 backdrop-blur-xl hover:shadow-3d-hover transition-all duration-500 group cursor-pointer h-full">
+              <div className="flex items-center gap-4 p-1">
+                <div className="p-4 bg-red-50 text-red-600 rounded-2xl group-hover:bg-red-600 group-hover:text-white transition-all duration-500 shadow-inner ring-1 ring-red-500/10 flex-shrink-0">
+                  <AlertTriangle className="w-7 h-7" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Bajo Stock</p>
+                  <h3 className="text-4xl font-black text-slate-900 tracking-tighter leading-none">{data?.refacciones_bajo_stock ?? 0}</h3>
+                  <p className="text-xs text-slate-400 font-medium mt-1">Almacén</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Bajo Stock</p>
-                <h3 className="text-4xl font-black text-slate-900 tracking-tighter leading-none">{data?.refacciones_bajo_stock ?? 0}</h3>
-                <p className="text-xs text-slate-400 font-medium mt-1">Almacén</p>
-              </div>
-            </div>
-          </Card>
-        </Link>
+            </Card>
+          </Link>
+        )}
       </div>
 
-      {/* ── Bottom row: Estado Órdenes + Gráfico + Accesos Rápidos ── */}
+      {/* ── Bottom row ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5">
 
-        {/* Estado de Órdenes list */}
+        {/* Estado de Órdenes */}
         <Card
           header={
             <div className="px-8 pt-8 pb-2 font-black text-xl text-slate-900 tracking-tight flex items-center gap-3">
@@ -267,14 +272,14 @@ export default function DashboardPage() {
         >
           <div className="px-6 pb-8 pt-2">
             <DonutChart items={activeStates} />
-
             {token && (
-            <Link href="/taller" className="inline-block mt-4 px-4 py-2 bg-purple-600 text-white rounded-[1rem] hover:bg-purple-700 transition-colors shadow-lg">
-              Ver Órdenes en Taller
-            </Link>
+              <Link
+                href="/taller"
+                className="inline-block mt-4 px-4 py-2 bg-purple-600 text-white rounded-[1rem] hover:bg-purple-700 transition-colors shadow-lg"
+              >
+                Ver Órdenes en Taller
+              </Link>
             )}
-
-            {/* Summary row */}
             <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between">
               <div className="text-center flex-1">
                 <p className="text-2xl font-black text-slate-900">{data?.vehiculos_en_taller ?? 0}</p>
@@ -289,7 +294,7 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        {/* Accesos Rápidos */}
+        {/* Accesos Rápidos — role-filtered */}
         <Card
           header={
             <div className="px-8 pt-8 pb-2 font-black text-xl text-slate-900 tracking-tight flex items-center gap-3">
@@ -300,43 +305,60 @@ export default function DashboardPage() {
           className="rounded-[2.5rem] border-none shadow-3d bg-white/90 backdrop-blur-xl"
         >
           <div className="flex flex-col gap-3 px-4 pb-6">
-            <button
-              onClick={() => window.location.href = '/taller'}
-              className="group flex items-center justify-between p-5 bg-gradient-3d text-white rounded-[1.5rem] hover:shadow-2xl hover:shadow-blue-600/40 transition-all duration-300 active:scale-95 overflow-hidden relative"
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full translate-x-8 -translate-y-2 blur-2xl group-hover:scale-150 transition-transform duration-500" />
-              <span className="font-black text-base tracking-tight relative z-10">Nueva Orden</span>
-              <Plus className="w-5 h-5 relative z-10 group-hover:rotate-90 transition-transform duration-300" />
-            </button>
+            {/* Nueva Orden — ADMIN & ASESOR only */}
+            {(isAdmin || isAsesor) && (
+              <button
+                onClick={() => (window.location.href = '/taller')}
+                className="group flex items-center justify-between p-5 bg-gradient-3d text-white rounded-[1.5rem] hover:shadow-2xl hover:shadow-blue-600/40 transition-all duration-300 active:scale-95 overflow-hidden relative"
+              >
+                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full translate-x-8 -translate-y-2 blur-2xl group-hover:scale-150 transition-transform duration-500" />
+                <span className="font-black text-base tracking-tight relative z-10">Nueva Orden</span>
+                <Plus className="w-5 h-5 relative z-10 group-hover:rotate-90 transition-transform duration-300" />
+              </button>
+            )}
 
+            {/* Ver Taller — always */}
             <button
-              onClick={() => window.location.href = '/clientes'}
-              className="group flex items-center justify-between p-5 bg-slate-50/50 text-slate-700 rounded-[1.5rem] hover:bg-slate-100 border border-slate-100 hover:border-blue-200 transition-all duration-300 active:scale-95 shadow-sm"
-            >
-              <span className="font-black text-base tracking-tight">Ver Clientes</span>
-              <Users className="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-colors" />
-            </button>
-
-            <button
-              onClick={() => window.location.href = '/taller'}
+              onClick={() => (window.location.href = '/taller')}
               className="group flex items-center justify-between p-5 bg-slate-50/50 text-slate-700 rounded-[1.5rem] hover:bg-slate-100 border border-slate-100 hover:border-amber-200 transition-all duration-300 active:scale-95 shadow-sm"
             >
               <span className="font-black text-base tracking-tight">Taller y Reparaciones</span>
               <Wrench className="w-5 h-5 text-slate-300 group-hover:text-amber-500 transition-colors" />
             </button>
 
-            <button
-              onClick={() => window.location.href = '/refacciones'}
-              className="group flex items-center justify-between p-5 bg-slate-50/50 text-slate-700 rounded-[1.5rem] hover:bg-slate-100 border border-slate-100 hover:border-emerald-200 transition-all duration-300 active:scale-95 shadow-sm"
-            >
-              <span className="font-black text-base tracking-tight">Almacén</span>
-              <Car className="w-5 h-5 text-slate-300 group-hover:text-emerald-500 transition-colors" />
-            </button>
+            {/* Ver Clientes — ADMIN & ASESOR only */}
+            {showClientes && (
+              <button
+                onClick={() => (window.location.href = '/clientes')}
+                className="group flex items-center justify-between p-5 bg-slate-50/50 text-slate-700 rounded-[1.5rem] hover:bg-slate-100 border border-slate-100 hover:border-blue-200 transition-all duration-300 active:scale-95 shadow-sm"
+              >
+                <span className="font-black text-base tracking-tight">Ver Clientes</span>
+                <Users className="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-colors" />
+              </button>
+            )}
+
+            {/* Almacén — ADMIN only */}
+            {isAdmin && (
+              <button
+                onClick={() => (window.location.href = '/refacciones')}
+                className="group flex items-center justify-between p-5 bg-slate-50/50 text-slate-700 rounded-[1.5rem] hover:bg-slate-100 border border-slate-100 hover:border-emerald-200 transition-all duration-300 active:scale-95 shadow-sm"
+              >
+                <span className="font-black text-base tracking-tight">Almacén</span>
+                <Car className="w-5 h-5 text-slate-300 group-hover:text-emerald-500 transition-colors" />
+              </button>
+            )}
+
+            {/* Panel Admin — ADMIN only */}
+            {showAdmin && (
+              <button
+                onClick={() => (window.location.href = '/admin')}
+                className="group flex items-center justify-between p-5 bg-slate-50/50 text-slate-700 rounded-[1.5rem] hover:bg-slate-100 border border-slate-100 hover:border-indigo-200 transition-all duration-300 active:scale-95 shadow-sm"
+              >
+                <span className="font-black text-base tracking-tight">Panel Admin</span>
+                <Shield className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+              </button>
+            )}
           </div>
-<button onClick={() => window.location.href = '/admin'} className="group flex items-center justify-between p-5 bg-slate-50/50 text-slate-700 rounded-[1.5rem] hover:bg-slate-100 border border-slate-100 hover:border-indigo-200 transition-all duration-300 active:scale-95 shadow-sm">
-  <span className="font-black text-base tracking-tight">Panel Admin</span>
-   <Shield className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-colors" />
-</button>
         </Card>
       </div>
     </div>

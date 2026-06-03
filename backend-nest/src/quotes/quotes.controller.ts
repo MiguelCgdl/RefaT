@@ -1,12 +1,15 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Roles } from '../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { QuotesService } from './quotes.service';
 import { CreatePresupuestoDto } from './dto/create-presupuesto.dto';
 import { CreateLineaDto } from './dto/create-linea.dto';
 
 @Controller()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN', 'ASESOR')
 export class QuotesController {
   constructor(private service: QuotesService) {}
 

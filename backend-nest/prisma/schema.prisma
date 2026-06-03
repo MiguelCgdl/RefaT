@@ -13,7 +13,7 @@ generator client {
 enum RolUsuario {
   ADMIN
   MECANICO
-  RECEPCION
+  ASESOR
   ALMACEN
   CLIENTE
 }
