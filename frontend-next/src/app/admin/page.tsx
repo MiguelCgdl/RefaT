@@ -2,7 +2,7 @@
 'use client';
 import Link from 'next/link';
 import { Card } from 'primereact/card';
-import { ArrowLeft, Users, Shield, Lock } from 'lucide-react';
+import { ArrowLeft, Users, Shield } from 'lucide-react';
 
 export default function AdminHome() {
   return (
@@ -24,7 +24,7 @@ export default function AdminHome() {
       </div>
 
       {/* Grid of Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Link href="/admin/users" className="block h-full">
           <Card className="h-full rounded-[2rem] bg-white/80 backdrop-blur-md border-none shadow-3d hover:shadow-3d-hover transition-all duration-500 text-center p-6 flex flex-col items-center justify-center cursor-pointer group">
             <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-500">
@@ -41,17 +41,7 @@ export default function AdminHome() {
               <Shield className="w-8 h-8" />
             </div>
             <h2 className="text-xl font-black text-slate-800">Roles y Permisos</h2>
-            <p className="text-slate-500 mt-2 text-sm font-medium">Visualizar roles y configuración del sistema.</p>
-          </Card>
-        </Link>
-
-        <Link href="/admin/permissions" className="block h-full">
-          <Card className="h-full rounded-[2rem] bg-white/80 backdrop-blur-md border-none shadow-3d hover:shadow-3d-hover transition-all duration-500 text-center p-6 flex flex-col items-center justify-center cursor-pointer group">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-500">
-              <Lock className="w-8 h-8" />
-            </div>
-            <h2 className="text-xl font-black text-slate-800">Permisos</h2>
-            <p className="text-slate-500 mt-2 text-sm font-medium">Ver permisos granulares de seguridad.</p>
+            <p className="text-slate-500 mt-2 text-sm font-medium">Visualizar roles, permisos y usuarios asociados.</p>
           </Card>
         </Link>
       </div>
