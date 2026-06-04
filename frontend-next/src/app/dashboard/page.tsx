@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardResumen } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { Activity, AlertTriangle, LayoutDashboard, TrendingUp, Users, Plus, Car, Wrench, Shield } from 'lucide-react';
+import { Activity, AlertTriangle, LayoutDashboard, TrendingUp, Users, Plus, Car, Wrench } from 'lucide-react';
 import { Card } from 'primereact/card';
 import { ProgressBar } from 'primereact/progressbar';
 import Link from 'next/link';
@@ -117,7 +117,7 @@ export default function DashboardPage() {
   // What the mechanic sees on the KPI row
   const showStock = isAdmin || isAsesor;
   const showClientes = isAdmin || isAsesor;
-  const showAdmin = isAdmin;
+
 
   if (isLoading) {
     return (
@@ -348,16 +348,7 @@ export default function DashboardPage() {
               </button>
             )}
 
-            {/* Panel Admin — ADMIN only */}
-            {showAdmin && (
-              <button
-                onClick={() => (window.location.href = '/admin')}
-                className="group flex items-center justify-between p-5 bg-slate-50/50 text-slate-700 rounded-[1.5rem] hover:bg-slate-100 border border-slate-100 hover:border-indigo-200 transition-all duration-300 active:scale-95 shadow-sm"
-              >
-                <span className="font-black text-base tracking-tight">Panel Admin</span>
-                <Shield className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-colors" />
-              </button>
-            )}
+
           </div>
         </Card>
       </div>

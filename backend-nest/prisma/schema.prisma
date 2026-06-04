@@ -3,6 +3,7 @@
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -78,6 +79,7 @@ model Usuario {
   kanbanBoardsCreados KanbanBoard[] @relation("CreadorKanban")
   kanbanCardsAsignadas KanbanCard[] @relation("AsignadoAKanban")
   vehiculos Vehiculo[] @relation("ClienteVehiculo")
+  permisos       UsuarioPermiso[]
 
   @@map("usuarios")
 }
@@ -246,4 +248,37 @@ model KanbanCard {
   actualizadoEn DateTime    @updatedAt @map("actualizado_en")
 
   @@map("kanban_card")
+}
+
+model Permiso {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @unique
+  descripcion String?
+  
+  usuarios    UsuarioPermiso[]
+  rolePermisos RolePermiso[] @relation("PermisoRolePermisos")
+  
+  @@map("permisos")
+}
+
+model UsuarioPermiso {
+  usuarioId Int      @map("usuario_id")
+  permisoId Int      @map("permiso_id")
+  
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  permiso   Permiso  @relation(fields: [permisoId], references: [id], onDelete: Cascade)
+  
+  @@id([usuarioId, permisoId])
+  @@map("usuario_permisos")
+}
+
+// ── Role based default permissions ──
+model RolePermiso {
+  rol      RolUsuario @map("rol")
+  permisoId Int       @map("permiso_id")
+
+  permiso Permiso @relation("PermisoRolePermisos", fields: [permisoId], references: [id])
+
+  @@id([rol, permisoId])
+  @@map("role_permisos")
 }

@@ -28,6 +28,24 @@ async function main() {
   });
 
   console.log(`Seed OK: usuario ${adminUsername}/${adminPassword}`);
+
+  // ── Seed system module permissions ──
+  const modules = [
+    { nombre: 'Dashboard',  descripcion: 'Panel principal con métricas y KPIs del taller.' },
+    { nombre: 'Clientes',   descripcion: 'Gestión de clientes y vehículos.' },
+    { nombre: 'Taller',     descripcion: 'Órdenes de trabajo, presupuestos y reparaciones.' },
+    { nombre: 'Almacen',    descripcion: 'Inventario de refacciones y movimientos de stock.' },
+    { nombre: 'Admin',      descripcion: 'Administración del sistema, usuarios y configuración.' },
+  ];
+
+  for (const mod of modules) {
+    await prisma.permiso.upsert({
+      where: { nombre: mod.nombre },
+      update: { descripcion: mod.descripcion },
+      create: mod,
+    });
+  }
+  console.log(`Seed OK: ${modules.length} módulos de permisos creados / actualizados`);
 }
 
 main()

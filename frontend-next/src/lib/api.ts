@@ -118,3 +118,11 @@ export const createColumn = (token: string, data: Record<string, unknown>) => re
 export const createCard = (token: string, data: Record<string, unknown>) => request<any>('/kanban/cards', { method: 'POST', body: JSON.stringify(data), token });
 export const updateCard = (token: string, id: number, data: Record<string, unknown>) => request<any>(`/kanban/cards/${id}`, { method: 'PATCH', body: JSON.stringify(data), token });
 export const deleteCard = (token: string, id: number) => request<void>(`/kanban/cards/${id}`, { method: 'DELETE', token });
+
+export const getPermisos = (token: string) => request<any[]>('/permisos', { token });
+export const createPermiso = (token: string, data: Record<string, unknown>) => request<any>('/permisos', { method: 'POST', body: JSON.stringify(data), token });
+export const updatePermiso = (token: string, id: number, data: Record<string, unknown>) => request<any>(`/permisos/${id}`, { method: 'PATCH', body: JSON.stringify(data), token });
+export const deletePermiso = (token: string, id: number) => request<void>(`/permisos/${id}`, { method: 'DELETE', token });
+export const assignUserToPermiso = (token: string, permisoId: number, usuarioId: number) => request<any>(`/permisos/${permisoId}/usuarios/${usuarioId}`, { method: 'POST', token });
+export const removeUserFromPermiso = (token: string, permisoId: number, usuarioId: number) => request<void>(`/permisos/${permisoId}/usuarios/${usuarioId}`, { method: 'DELETE', token });
+

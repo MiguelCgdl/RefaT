@@ -16,6 +16,7 @@ import { ReportsModule } from './reports/reports.module';
 import { QueueModule } from './queue/queue.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthController } from './common/health.controller';
+import { PermisosModule } from './permisos/permisos.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { HealthController } from './common/health.controller';
     NotificationsModule,
     ReportsModule,
     QueueModule,
+    PermisosModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
