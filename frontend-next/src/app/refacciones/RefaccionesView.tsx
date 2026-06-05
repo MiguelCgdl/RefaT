@@ -238,28 +238,47 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
 
     const buffer = await file.arrayBuffer();
     try {
-      const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+      const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array', codepage: 65001 });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json(worksheet) as any[];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' }) as any[];
 
       let successCount = 0;
       let errorCount = 0;
 
+      // Helper: busca un valor en el row ignorando diferencias de mayúsculas, 
+      // acentos y espacios extra en las claves
+      const getVal = (row: any, ...keys: string[]): string => {
+        // Normalize: lowercase, remove accents, trim
+        const norm = (s: string) =>
+          s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+        const rowNormKeys = Object.keys(row).reduce((acc: any, k) => {
+          acc[norm(k)] = row[k];
+          return acc;
+        }, {});
+        for (const key of keys) {
+          const v = rowNormKeys[norm(key)];
+          if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
+        }
+        return '';
+      };
+
       for (const row of rows) {
         try {
-          const payload = {
-            sku: String(row.SKU || row.sku || ''),
-            nombre: String(row.Nombre || row.nombre || ''),
-            categoria: String(row.Categoría || row.categoria || ''),
-            costo: Number(row.Costo || row.costo || 0),
-            precioVenta: Number(row['Precio Venta'] || row.precioVenta || row.precio_venta || 0),
-            stock: Number(row.Stock || row.stock || 0),
-            stockMinimo: Number(row['Stock Mínimo'] || row.stockMinimo || row.stock_minimo || 0),
-            ubicacion: String(row.Ubicación || row.ubicacion || '')
-          };
+          const sku = getVal(row, 'SKU', 'sku');
+          const nombre = getVal(row, 'Nombre', 'nombre');
+          if (!sku || !nombre) continue;
 
-          if (!payload.sku || !payload.nombre) continue;
+          const payload = {
+            sku,
+            nombre,
+            categoria: getVal(row, 'Categoría', 'Categoria', 'categoria', 'category'),
+            costo: Number(getVal(row, 'Costo', 'costo', 'cost') || 0),
+            precioVenta: Number(getVal(row, 'Precio Venta', 'precioVenta', 'precio_venta', 'price') || 0),
+            stock: Number(getVal(row, 'Stock', 'stock') || 0),
+            stockMinimo: Number(getVal(row, 'Stock Minimo', 'Stock Mínimo', 'stockMinimo', 'stock_minimo') || 0),
+            ubicacion: getVal(row, 'Ubicación', 'Ubicacion', 'ubicacion', 'location'),
+          };
 
           const existing = refacciones.find((r) => r.sku === payload.sku);
           if (existing) {

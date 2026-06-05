@@ -96,6 +96,7 @@ export class ReportsService {
 
   async generarPdfInventarioValorizado(): Promise<Buffer> {
     const refacciones = await this.prisma.refaccion.findMany({
+      where: { activo: true },
       orderBy: [{ categoria: 'asc' }, { nombre: 'asc' }],
     });
 
@@ -177,6 +178,7 @@ export class ReportsService {
 
   async exportarInventarioValorizadoExcel(): Promise<Buffer> {
     const refacciones = await this.prisma.refaccion.findMany({
+      where: { activo: true },
       orderBy: [{ categoria: 'asc' }, { nombre: 'asc' }],
     });
 

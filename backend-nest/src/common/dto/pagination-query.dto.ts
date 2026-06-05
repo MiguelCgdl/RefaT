@@ -12,6 +12,6 @@ export class PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(100)
-  pageSize?: number = 20;
+  @Max(5000)
+  pageSize?: number = 1000;
 }

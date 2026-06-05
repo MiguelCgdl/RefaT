@@ -40,10 +40,10 @@ export class PartsService {
     };
   }
 
-  async findAllRefacciones(page = 1, pageSize = 20) {
+  async findAllRefacciones(page = 1, pageSize = 1000) {
     const [total, rows] = await this.prisma.$transaction([
-      this.prisma.refaccion.count(),
-      this.prisma.refaccion.findMany({ orderBy: { nombre: 'asc' }, ...skipTake(page, pageSize) }),
+      this.prisma.refaccion.count({ where: { activo: true } }),
+      this.prisma.refaccion.findMany({ where: { activo: true }, orderBy: { nombre: 'asc' }, ...skipTake(page, pageSize) }),
     ]);
     return paginated(rows.map((r) => this.mapRefaccion(r)), total, page, pageSize);
   }
