@@ -37,6 +37,12 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
   const [deleteItem, setDeleteItem] = useState<Refaccion | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [showReports, setShowReports] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Refaccion[]>([]);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [showBulkDisableConfirm, setShowBulkDisableConfirm] = useState(false);
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [showBulkCategoryEdit, setShowBulkCategoryEdit] = useState(false);
+  const [bulkCategory, setBulkCategory] = useState('');
 
   const createMutation = useMutation({
     mutationFn: (data: any) => createRefaccion(token!, data),
@@ -67,6 +73,47 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
     },
     onError: (e: any) => toast.current?.show({ severity: 'error', summary: 'Error', detail: e.message }),
   });
+
+  const handleBulkDelete = async () => {
+    setIsBulkProcessing(true);
+    let ok = 0; let fail = 0;
+    for (const item of selectedItems) {
+      try { await deleteRefaccion(token!, item.id); ok++; } catch { fail++; }
+    }
+    qc.invalidateQueries({ queryKey: ['refacciones'] });
+    setSelectedItems([]);
+    setShowBulkDeleteConfirm(false);
+    setIsBulkProcessing(false);
+    toast.current?.show({ severity: fail === 0 ? 'success' : 'warn', summary: 'Eliminación en Lote', detail: `${ok} eliminadas, ${fail} errores.` });
+  };
+
+  const handleBulkDisable = async () => {
+    setIsBulkProcessing(true);
+    let ok = 0; let fail = 0;
+    for (const item of selectedItems) {
+      try { await updateRefaccion(token!, item.id, { activo: false }); ok++; } catch { fail++; }
+    }
+    qc.invalidateQueries({ queryKey: ['refacciones'] });
+    setSelectedItems([]);
+    setShowBulkDisableConfirm(false);
+    setIsBulkProcessing(false);
+    toast.current?.show({ severity: fail === 0 ? 'success' : 'warn', summary: 'Deshabilitar en Lote', detail: `${ok} deshabilitadas, ${fail} errores.` });
+  };
+
+  const handleBulkCategoryUpdate = async () => {
+    if (!bulkCategory) return;
+    setIsBulkProcessing(true);
+    let ok = 0; let fail = 0;
+    for (const item of selectedItems) {
+      try { await updateRefaccion(token!, item.id, { categoria: bulkCategory }); ok++; } catch { fail++; }
+    }
+    qc.invalidateQueries({ queryKey: ['refacciones'] });
+    setSelectedItems([]);
+    setShowBulkCategoryEdit(false);
+    setBulkCategory('');
+    setIsBulkProcessing(false);
+    toast.current?.show({ severity: fail === 0 ? 'success' : 'warn', summary: 'Categoría Actualizada', detail: `${ok} actualizadas, ${fail} errores.` });
+  };
 
   const refacciones = refaccionesResponse?.results ?? [];
 
@@ -462,6 +509,8 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
           loading={isLoading || isImporting}
           dataKey="id"
           className="p-datatable-modern"
+          selection={user?.rol === 'ADMIN' ? selectedItems : undefined}
+          onSelectionChange={user?.rol === 'ADMIN' ? (e) => setSelectedItems(e.value as Refaccion[]) : undefined}
           emptyMessage={
             <div className="py-20 text-center flex flex-col items-center gap-4">
               <div className="p-6 bg-slate-50 rounded-full">
@@ -478,6 +527,7 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
           stripedRows
           showGridlines={false}
         >
+          {user?.rol === 'ADMIN' && <Column selectionMode="multiple" style={{ width: '3rem' }} />}
           <Column header="SKU" body={skuBodyTemplate} sortable sortField="sku" className="px-8 py-6" />
           <Column header="Pieza / Modelo" body={pieceBodyTemplate} sortable sortField="nombre" className="px-8 py-6" />
           <Column field="categoria" header="Categoría" body={(r) => <Tag value={(r as any).categoria || 'N/A'} severity="secondary" className="text-[10px] font-bold uppercase tracking-wider px-3" />} sortable className="px-8 py-6" />
@@ -486,6 +536,46 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
           <Column header="Acciones" body={actionBodyTemplate} style={{ width: '12rem', textAlign: 'center' }} className="px-8 py-6" />
         </DataTable>
       </div>
+
+      {/* Bulk Action Floating Bar */}
+      {user?.rol === 'ADMIN' && selectedItems.length > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 duration-300">
+          <div className="flex items-center gap-3 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-slate-900/40 border border-slate-700">
+            <div className="flex items-center gap-2 pr-4 border-r border-slate-600">
+              <span className="w-7 h-7 flex items-center justify-center bg-blue-600 text-white rounded-full text-xs font-black">{selectedItems.length}</span>
+              <span className="text-sm font-bold text-slate-200">seleccionadas</span>
+            </div>
+            <Button
+              label="Cambiar Categoría"
+              icon="pi pi-tag"
+              size="small"
+              onClick={() => setShowBulkCategoryEdit(true)}
+              className="p-button-info p-button-outlined rounded-xl text-xs border-blue-500 text-blue-300 hover:bg-blue-900 transition-all"
+            />
+            <Button
+              label="Deshabilitar"
+              icon="pi pi-eye-slash"
+              size="small"
+              onClick={() => setShowBulkDisableConfirm(true)}
+              className="p-button-warning p-button-outlined rounded-xl text-xs border-amber-500 text-amber-300 hover:bg-amber-900 transition-all"
+            />
+            <Button
+              label="Eliminar"
+              icon="pi pi-trash"
+              size="small"
+              onClick={() => setShowBulkDeleteConfirm(true)}
+              className="p-button-danger rounded-xl text-xs bg-red-600 border-none hover:bg-red-700 transition-all shadow-md shadow-red-900/50"
+            />
+            <button
+              onClick={() => setSelectedItems([])}
+              className="ml-2 p-1 text-slate-400 hover:text-white transition-all"
+              title="Limpiar selección"
+            >
+              <span className="pi pi-times text-xs" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modals - 3D/Elevated Look */}
       <Dialog 
@@ -546,6 +636,90 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
             <Button label="PDF" icon="pi pi-file-pdf" onClick={downloadPdfReport} className="p-button-danger rounded-xl flex-1 shadow-md hover:shadow-lg transition-all" />
             <Button label="Excel" icon="pi pi-file-excel" onClick={downloadExcelReport} className="p-button-success rounded-xl flex-1 shadow-md hover:shadow-lg transition-all" />
           </div>
+        </div>
+      </Dialog>
+
+      {/* Bulk Delete Confirm */}
+      <Dialog
+        header={<div className="flex items-center gap-3 text-red-600"><Trash2 className="w-6 h-6" /> Eliminar en Lote</div>}
+        visible={showBulkDeleteConfirm}
+        style={{ width: '90vw', maxWidth: '420px' }}
+        onHide={() => setShowBulkDeleteConfirm(false)}
+        className="rounded-[2.5rem] shadow-2xl border-none"
+        maskClassName="backdrop-blur-sm"
+        footer={
+          <div className="flex justify-end gap-3 p-4">
+            <Button label="Cancelar" text onClick={() => setShowBulkDeleteConfirm(false)} className="rounded-xl" />
+            <Button label={`Sí, eliminar ${selectedItems.length}`} severity="danger" loading={isBulkProcessing} onClick={handleBulkDelete} className="rounded-xl p-button-raised shadow-lg" />
+          </div>
+        }
+      >
+        <p className="text-slate-600 font-medium px-4 pt-4">
+          ¿Estás seguro de eliminar <span className="font-black text-red-600">{selectedItems.length} refacciones</span>? Esta acción es permanente.
+        </p>
+      </Dialog>
+
+      {/* Bulk Disable Confirm */}
+      <Dialog
+        header={<div className="flex items-center gap-3 text-amber-600"><span className="pi pi-eye-slash" /> Deshabilitar en Lote</div>}
+        visible={showBulkDisableConfirm}
+        style={{ width: '90vw', maxWidth: '420px' }}
+        onHide={() => setShowBulkDisableConfirm(false)}
+        className="rounded-[2.5rem] shadow-2xl border-none"
+        maskClassName="backdrop-blur-sm"
+        footer={
+          <div className="flex justify-end gap-3 p-4">
+            <Button label="Cancelar" text onClick={() => setShowBulkDisableConfirm(false)} className="rounded-xl" />
+            <Button label={`Deshabilitar ${selectedItems.length}`} severity="warning" loading={isBulkProcessing} onClick={handleBulkDisable} className="rounded-xl p-button-raised shadow-lg" />
+          </div>
+        }
+      >
+        <p className="text-slate-600 font-medium px-4 pt-4">
+          Se deshabilitarán <span className="font-black text-amber-600">{selectedItems.length} refacciones</span>. Ya no serán visibles en el catálogo activo.
+        </p>
+      </Dialog>
+
+      {/* Bulk Category Edit */}
+      <Dialog
+        header={<div className="flex items-center gap-3 text-blue-600"><span className="pi pi-tag" /> Cambiar Categoría en Lote</div>}
+        visible={showBulkCategoryEdit}
+        style={{ width: '90vw', maxWidth: '420px' }}
+        onHide={() => { setShowBulkCategoryEdit(false); setBulkCategory(''); }}
+        className="rounded-[2.5rem] shadow-2xl border-none"
+        maskClassName="backdrop-blur-sm"
+        footer={
+          <div className="flex justify-end gap-3 p-4">
+            <Button label="Cancelar" text onClick={() => setShowBulkCategoryEdit(false)} className="rounded-xl" />
+            <Button label={`Aplicar a ${selectedItems.length}`} severity="info" loading={isBulkProcessing} disabled={!bulkCategory} onClick={handleBulkCategoryUpdate} className="rounded-xl p-button-raised shadow-lg" />
+          </div>
+        }
+      >
+        <div className="px-4 pt-4 flex flex-col gap-3">
+          <p className="text-slate-600 font-medium">
+            Selecciona la nueva categoría para las <span className="font-black text-blue-600">{selectedItems.length} refacciones</span> seleccionadas:
+          </p>
+          <select
+            value={bulkCategory}
+            onChange={e => setBulkCategory(e.target.value)}
+            className="refa-native-select rounded-xl shadow-inner"
+          >
+            <option value="">— Selecciona una categoría —</option>
+            <option value="Aceites y Lubricantes">Aceites y Lubricantes</option>
+            <option value="Filtros">Filtros</option>
+            <option value="Frenos">Frenos</option>
+            <option value="Motor">Motor</option>
+            <option value="Suspensión">Suspensión</option>
+            <option value="Eléctrico">Eléctrico</option>
+            <option value="Energía / Baterías">Energía / Baterías</option>
+            <option value="Carrocería">Carrocería</option>
+            <option value="Transmisión">Transmisión</option>
+            <option value="Refrigeración">Refrigeración</option>
+            <option value="Escape">Escape</option>
+            <option value="Neumáticos">Neumáticos</option>
+            <option value="Herramientas">Herramientas</option>
+            <option value="Consumibles">Consumibles</option>
+            <option value="Otro">Otro</option>
+          </select>
         </div>
       </Dialog>
 
