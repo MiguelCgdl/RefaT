@@ -15,7 +15,7 @@ import Link from 'next/link';
 
 const userSchema = z.object({
   username: z.string().min(3, 'El nombre de usuario debe tener al menos 3 caracteres'),
-  email: z.string().email('Correo electrónico no válido'),
+  email: z.string().email('Correo electrónico no válido').or(z.literal('')).optional(),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
   rol: z.enum(['ADMIN', 'MECANICO', 'ASESOR', 'ALMACEN', 'CLIENTE']),
   activo: z.boolean().default(true),
@@ -65,7 +65,11 @@ export default function CreateUserPage() {
 
   const onSubmit = (data: UserFormData) => {
     setErrorMsg('');
-    mutation.mutate(data);
+    const payload = { ...data };
+    if (!payload.email) {
+      delete payload.email;
+    }
+    mutation.mutate(payload);
   };
 
   return (
@@ -111,7 +115,7 @@ export default function CreateUserPage() {
 
             {/* Email */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Correo Electrónico *</label>
+              <label className="text-sm font-bold text-slate-700">Correo Electrónico (Opcional)</label>
               <input
                 type="email"
                 {...register('email')}

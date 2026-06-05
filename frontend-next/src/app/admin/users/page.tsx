@@ -77,10 +77,14 @@ export default function AdminUsersPage() {
   const handleUpdate = () => {
     const payload: any = {
       username: editForm.username,
-      email: editForm.email,
       rol: editForm.rol,
       activo: editForm.activo,
     };
+    if (editForm.email) {
+      payload.email = editForm.email;
+    } else {
+      payload.email = null;
+    }
     if (editForm.password) {
       payload.password = editForm.password;
     }
@@ -187,7 +191,7 @@ export default function AdminUsersPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-bold text-slate-700">Email</label>
+            <label className="text-sm font-bold text-slate-700">Email (Opcional)</label>
             <InputText
               value={editForm.email}
               onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}

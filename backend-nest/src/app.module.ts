@@ -22,10 +22,7 @@ import { PermisosModule } from './permisos/permisos.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [
-        path.resolve(__dirname, '..', '.env'),
-        path.resolve(__dirname, '..', '..', '.env'),
-      ],
+      envFilePath: ['.env', '../.env'],
     }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     PrismaModule,

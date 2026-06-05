@@ -1,9 +1,9 @@
 'use client';
 import { useState, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createRefaccion, getRefacciones, updateRefaccion, deleteRefaccion } from '@/lib/api';
+import { createRefaccion, getRefacciones, updateRefaccion, deleteRefaccion, exportPdfInventarioValorizado, exportExcelInventarioValorizado } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, Package, Pencil, Trash2, Search, Download, Upload, FileSpreadsheet, Tag as TagIcon, Filter } from 'lucide-react';
+import { Plus, Package, Pencil, Trash2, Search, Download, Upload, FileSpreadsheet, Tag as TagIcon, Filter, FileText } from 'lucide-react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
@@ -14,10 +14,12 @@ import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { FileUpload } from 'primereact/fileupload';
 import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 import type { Refaccion } from '@/lib/types';
 
 export default function RefaccionesView({ hideHeader = false }: { hideHeader?: boolean }) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const qc = useQueryClient();
   const toast = useRef<Toast>(null);
   const fileUploadRef = useRef<FileUpload>(null);
@@ -34,6 +36,7 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
   const [editItem, setEditItem] = useState<Refaccion | null>(null);
   const [deleteItem, setDeleteItem] = useState<Refaccion | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [showReports, setShowReports] = useState(false);
 
   const createMutation = useMutation({
     mutationFn: (data: any) => createRefaccion(token!, data),
@@ -96,6 +99,90 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
     XLSX.utils.book_append_sheet(workbook, worksheet, "Almacen");
     XLSX.writeFile(workbook, "Almacen_Refacciones.xlsx");
     toast.current?.show({ severity: 'info', summary: 'Excel', detail: 'Archivo exportado correctamente' });
+  };
+
+  const downloadTemplate = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Plantilla');
+
+    // Headers
+    worksheet.columns = [
+      { header: 'SKU', key: 'sku', width: 20 },
+      { header: 'Nombre', key: 'nombre', width: 30 },
+      { header: 'Categoría', key: 'categoria', width: 25 },
+      { header: 'Costo', key: 'costo', width: 15 },
+      { header: 'Precio Venta', key: 'precioVenta', width: 15 },
+      { header: 'Stock', key: 'stock', width: 15 },
+      { header: 'Stock Mínimo', key: 'stockMinimo', width: 15 },
+      { header: 'Ubicación', key: 'ubicacion', width: 20 },
+    ];
+
+    worksheet.getRow(1).font = { bold: true };
+
+    worksheet.addRow({
+      sku: 'REF-001',
+      nombre: 'Filtro de Aceite',
+      categoria: 'Filtros',
+      costo: 150.00,
+      precioVenta: 250.00,
+      stock: 10,
+      stockMinimo: 2,
+      ubicacion: 'Estante A-1'
+    });
+
+    const categorias = [
+      'Aceites y Lubricantes',
+      'Filtros',
+      'Frenos',
+      'Motor',
+      'Suspensión',
+      'Eléctrico',
+      'Energía / Baterías',
+      'Carrocería',
+      'Transmisión',
+      'Refrigeración',
+      'Escape',
+      'Neumáticos',
+      'Herramientas',
+      'Consumibles',
+      'Otro'
+    ];
+
+    for (let i = 2; i <= 1000; i++) {
+      worksheet.getCell(`C${i}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [`"${categorias.join(',')}"`],
+        showErrorMessage: true,
+        errorStyle: 'error',
+        errorTitle: 'Categoría inválida',
+        error: 'Por favor, selecciona una categoría de la lista.'
+      };
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), 'Plantilla_Refacciones.xlsx');
+    toast.current?.show({ severity: 'info', summary: 'Plantilla', detail: 'Plantilla con categorías descargada correctamente' });
+  };
+
+  const downloadPdfReport = async () => {
+    try {
+      const blob = await exportPdfInventarioValorizado(token!);
+      saveAs(blob, 'Inventario_Valorizado.pdf');
+      toast.current?.show({ severity: 'success', summary: 'Reporte', detail: 'Reporte PDF descargado' });
+    } catch (e: any) {
+      toast.current?.show({ severity: 'error', summary: 'Error', detail: 'No se pudo descargar el reporte PDF' });
+    }
+  };
+
+  const downloadExcelReport = async () => {
+    try {
+      const blob = await exportExcelInventarioValorizado(token!);
+      saveAs(blob, 'Inventario_Valorizado.xlsx');
+      toast.current?.show({ severity: 'success', summary: 'Reporte', detail: 'Reporte Excel descargado' });
+    } catch (e: any) {
+      toast.current?.show({ severity: 'error', summary: 'Error', detail: 'No se pudo descargar el reporte Excel' });
+    }
   };
 
   const onUpload = async (event: any) => {
@@ -221,6 +308,7 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
             <option value="Motor">Motor</option>
             <option value="Suspensión">Suspensión</option>
             <option value="Eléctrico">Eléctrico</option>
+            <option value="Energía / Baterías">Energía / Baterías</option>
             <option value="Carrocería">Carrocería</option>
             <option value="Transmisión">Transmisión</option>
             <option value="Refrigeración">Refrigeración</option>
@@ -291,11 +379,25 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
+          {user?.rol === 'ADMIN' && (
+            <Button 
+              label="Reportes" 
+              icon={<FileText className="w-4 h-4 mr-2" />} 
+              onClick={() => setShowReports(true)} 
+              className="p-button-outlined p-button-warning rounded-2xl shadow-sm bg-orange-50/50 text-orange-600 hover:shadow-md border-orange-200 transition-all" 
+            />
+          )}
           <Button 
             label="Exportar" 
             icon={<Download className="w-4 h-4 mr-2" />} 
             onClick={exportToExcel} 
             className="p-button-outlined p-button-secondary rounded-2xl shadow-sm bg-white/50 hover:shadow-md transition-all" 
+          />
+          <Button 
+            label="Plantilla CSV/Excel" 
+            icon={<FileSpreadsheet className="w-4 h-4 mr-2" />} 
+            onClick={downloadTemplate} 
+            className="p-button-outlined p-button-info rounded-2xl shadow-sm bg-blue-50/50 text-blue-600 hover:shadow-md border-blue-200 transition-all" 
           />
           <FileUpload 
             mode="basic" 
@@ -426,6 +528,25 @@ export default function RefaccionesView({ hideHeader = false }: { hideHeader?: b
           ¿Estás seguro de eliminar <span className="font-black text-slate-900">[{deleteItem?.sku}] {deleteItem?.nombre}</span>? 
           Esta acción es permanente y no se puede deshacer.
         </p>
+      </Dialog>
+
+      <Dialog 
+        header={<div className="flex items-center gap-3 text-slate-800"><FileText className="w-6 h-6 text-orange-600" /> Reportes de Almacén</div>}
+        visible={showReports} 
+        style={{ width: '90vw', maxWidth: '400px' }} 
+        onHide={() => setShowReports(false)}
+        className="rounded-[2.5rem] shadow-2xl border-none"
+        maskClassName="backdrop-blur-sm"
+      >
+        <div className="flex flex-col gap-4 mt-4">
+          <p className="text-slate-600 font-medium px-4 text-center">
+            Selecciona el formato para descargar el reporte de Inventario Valorizado (existencias y costos por categoría):
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4 px-4 pb-4">
+            <Button label="PDF" icon="pi pi-file-pdf" onClick={downloadPdfReport} className="p-button-danger rounded-xl flex-1 shadow-md hover:shadow-lg transition-all" />
+            <Button label="Excel" icon="pi pi-file-excel" onClick={downloadExcelReport} className="p-button-success rounded-xl flex-1 shadow-md hover:shadow-lg transition-all" />
+          </div>
+        </div>
       </Dialog>
 
     </div>

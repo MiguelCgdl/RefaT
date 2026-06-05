@@ -111,6 +111,11 @@ export const exportPdfPresupuesto = (token: string, id: number) =>
 export const exportRefaccionesExcel = (token: string) =>
   request<Blob>('/reportes/refacciones/excel', { token, responseType: 'blob' });
 
+export const exportPdfInventarioValorizado = (token: string) =>
+  request<Blob>('/reportes/inventario/pdf', { token, responseType: 'blob' });
+export const exportExcelInventarioValorizado = (token: string) =>
+  request<Blob>('/reportes/inventario/excel', { token, responseType: 'blob' });
+
 export const getBoards = (token: string) => request<any[]>('/kanban/boards', { token });
 export const getBoard = (token: string, id: number) => request<any>(`/kanban/boards/${id}`, { token });
 export const createBoard = (token: string, data: Record<string, unknown>) => request<any>('/kanban/boards', { method: 'POST', body: JSON.stringify(data), token });

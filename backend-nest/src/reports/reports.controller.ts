@@ -33,4 +33,22 @@ export class ReportsController {
     res.setHeader('Content-Disposition', 'attachment; filename=refacciones.xlsx');
     res.send(buf);
   }
+
+  @Get('inventario/pdf')
+  @Roles('ADMIN')
+  @Header('Content-Type', 'application/pdf')
+  async pdfInventarioValorizado(@Res() res: Response) {
+    const buf = await this.reports.generarPdfInventarioValorizado();
+    res.setHeader('Content-Disposition', 'attachment; filename=inventario-valorizado.pdf');
+    res.send(buf);
+  }
+
+  @Get('inventario/excel')
+  @Roles('ADMIN')
+  @Header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  async excelInventarioValorizado(@Res() res: Response) {
+    const buf = await this.reports.exportarInventarioValorizadoExcel();
+    res.setHeader('Content-Disposition', 'attachment; filename=inventario-valorizado.xlsx');
+    res.send(buf);
+  }
 }

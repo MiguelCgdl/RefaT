@@ -1,23 +1,25 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
+import { ConfigService } from '@nestjs/config';
+
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
-  constructor() {
-    if (!process.env.DATABASE_URL) {
-      const host = process.env.DB_HOST || 'localhost';
-      const port = process.env.DB_PORT || '5432';
-      const dbName = process.env.DB_NAME || 'postgres';
-      const user = process.env.DB_USER || 'postgres';
-      const password = process.env.DB_PASSWORD || '';
-
-      const auth = password ? `${encodeURIComponent(user)}:${encodeURIComponent(password)}` : encodeURIComponent(user);
-      process.env.DATABASE_URL = `postgresql://${auth}@${host}:${port}/${dbName}?schema=public`;
+  constructor(private configService: ConfigService) {
+    const url = configService.get<string>('DATABASE_URL');
+    if (!url) {
+      Logger.warn('DATABASE_URL no está definido en las variables de entorno', PrismaService.name);
     }
-
-    super();
+    
+    super({
+      datasources: {
+        db: {
+          url: url,
+        },
+      },
+    });
   }
 
   async onModuleInit() {
