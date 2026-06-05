@@ -19,10 +19,11 @@ export class UsersService {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(dto.password, salt);
 
+    const email = dto.email ?? `${dto.username}@example.com`;
     const user = await this.prisma.usuario.create({
       data: {
         username: dto.username,
-        email: dto.email,
+        email,
         passwordHash,
         rol: dto.rol,
         activo: dto.activo ?? true,

@@ -67,7 +67,7 @@ enum TipoNotificacion {
 model Usuario {
   id             Int        @id @default(autoincrement())
   username       String     @unique
-  email          String     @unique
+  email          String? @unique
   passwordHash   String     @map("password_hash")
   rol            RolUsuario
   activo         Boolean    @default(true)
